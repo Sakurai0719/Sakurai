@@ -173,21 +173,6 @@
                     </div>
                 </div>
             </div>
-        </section>
-
-        <!-- Gemini API Feature 2: Fan Zone -->
-        <section id="fan-zone" class="py-20 bg-gray-50">
-            <div class="container mx-auto px-6 text-center max-w-4xl">
-                <h2 class="section-title text-3xl text-center mb-8">FAN ZONE</h2>
-                <p class="text-gray-600 mb-8">桜井遥乃丞の次の活動をAIに想像させてみましょう！</p>
-                <button id="generate-idea-btn" class="gemini-btn inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                    ✨ 次の活動を想像する
-                </button>
-                <div id="idea-loading" class="mt-4 text-gray-500 hidden">想像中...</div>
-                <div id="idea-result" class="mt-8 p-6 bg-white rounded-xl shadow-lg text-gray-800 text-xl font-semibold hidden min-h-[80px] flex items-center justify-center"></div>
-            </div>
-        </section>
-
     </main>
 
     <!-- フッター -->
@@ -262,37 +247,6 @@
                 loadingElement.classList.add('hidden');
                 resultElement.classList.remove('hidden');
             }
-        }
-
-        // --- 機能1: AIプロフィール生成 ---
-        const generateProfileBtn = document.getElementById('generate-profile-btn');
-        if(generateProfileBtn) {
-            const aiProfileResult = document.getElementById('ai-profile-result');
-            const profileLoading = document.getElementById('profile-loading');
-
-            generateProfileBtn.addEventListener('click', () => {
-                const profileName = document.querySelector('#profile h3').innerText;
-                const profileParagraphs = Array.from(document.querySelectorAll('#profile .md\\:w-2\\/3 > p')).map(p => p.innerText).join('\n');
-                const profileDetails = document.querySelector('#profile .mt-6').innerText;
-                const fullProfileText = `${profileName}\n${profileParagraphs}\n${profileDetails}`;
-
-                const prompt = `以下のプロフィール情報をもとに、俳優「桜井遥乃丞」の魅力を伝える、創造的で物語性のある紹介文を日本語で生成してください。ファンに向けた、心に響くような文章が望ましいです。\n\n--- プロフィール ---\n${fullProfileText}`;
-                
-                callGeminiAPI(prompt, profileLoading, aiProfileResult);
-            });
-        }
-
-        // --- 機能2: 次の活動を想像 ---
-        const generateIdeaBtn = document.getElementById('generate-idea-btn');
-        if(generateIdeaBtn) {
-            const ideaResult = document.getElementById('idea-result');
-            const ideaLoading = document.getElementById('idea-loading');
-
-            generateIdeaBtn.addEventListener('click', () => {
-                const prompt = `桜井遥乃丞は、俳優、アーティスト、クリエイターとして活動しています。彼の特技は陸上競技、ギター、写真撮影です。この情報をもとに、彼の次の活動として考えられる、創造的でワクワクするようなアイデアを一つ、日本語で提案してください。具体的なプロジェクト名や内容を簡潔に記述してください。(例: 京都を舞台にした写真展『古都の静寂』を開催する, 主演映画『ミッドナイト・ギタリスト』で孤独な音楽家を演じる など)`;
-                
-                callGeminiAPI(prompt, ideaLoading, ideaResult);
-            });
         }
     </script>
 </body>
