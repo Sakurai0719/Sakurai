@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公式サイトをリニューアルしました - 桜井遥乃丞【公式サイト】</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --base-color: #f8f8ff;
+            --text-color: #333333;
+            --accent-color-1: #008899;
+            --accent-color-2: #778899;
+        }
+        body {
+            background-color: var(--base-color);
+            color: var(--text-color);
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .eng-font {
+            font-family: 'Inter', sans-serif;
+        }
+        /* 記事本文のスタイル */
+        .article-content h3 {
+            font-size: 1.5rem; /* 24px */
+            font-weight: 700;
+            margin-top: 2.5rem; /* 40px */
+            margin-bottom: 1rem; /* 16px */
+            padding-bottom: 0.5rem; /* 8px */
+            border-bottom: 2px solid var(--accent-color-1);
+        }
+        .article-content p {
+            line-height: 1.8;
+            margin-bottom: 1.5rem; /* 24px */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- ヘッダー -->
+    <header class="w-full bg-[var(--base-color)]/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <div class="container mx-auto px-6 py-5 flex justify-between items-center">
+            <a href="index.html" class="eng-font text-xl font-semibold text-[var(--accent-color-2)]">H.SAKURAI</a>
+            <a href="index.html#contact" class="eng-font text-sm font-semibold border border-[var(--accent-color-2)] text-[var(--accent-color-2)] px-4 py-2 rounded-full hover:bg-[var(--accent-color-2)] hover:text-white transition-colors duration-300">CONTACT</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="container mx-auto px-6 py-16 md:py-24 max-w-4xl">
+            <!-- 記事ヘッダー -->
+            <div class="mb-12">
+                <p class="text-sm text-[var(--accent-color-2)]">2025.08.02</p>
+                <span class="inline-block mt-2 text-xs font-semibold bg-[var(--accent-color-1)] text-white px-3 py-1 rounded-full">NEWS</span>
+                <h1 class="mt-4 text-3xl md:text-4xl font-bold text-[var(--text-color)]">公式サイトをリニューアルしました</h1>
+            </div>
+
+            <!-- 記事本文 -->
+            <article class="article-content text-[var(--accent-color-2)]">
+                <p>
+                    本日、桜井遥乃丞の公式サイトを全面的にリニューアルいたしました。
+                    日頃より応援してくださっている皆様に、より深く私の活動や考え方を知っていただくため、そして新たな挑戦を発信していくための拠点として、デザインと構造を一新しました。
+                </p>
+                
+                <h3>リニューアルのコンセプト</h3>
+                <p>
+                    今回のリニューアルでは、「静的なポートフォリオ」から「動的なメディア」への転換をコンセプトに掲げました。
+                    これまでの実績を並べるだけでなく、日々のトレーニングから得た知見（INSIGHTS）、クリエイティブ活動の裏側、そして社会や世界に対する私自身の考えなどを、コラムやニュース形式で積極的に発信していきます。
+                </p>
+                <p>
+                    デザインは、クリーンで信頼感のある印象を目指し、豊富な余白と整理されたグリッドレイアウトを採用しています。
+                    これにより、訪問してくださった皆様が、情報をストレスなく受け取れることを意図しました。
+                </p>
+
+                <h3>今後の展望</h3>
+                <p>
+                    このサイトを通じて、アスリートとして、そして一人のクリエイターとしての両側面から、様々な情報を発信していきたいと考えています。
+                    皆様からのフィードバックも、今後の活動の大きな糧となります。
+                </p>
+                <p>
+                    今後とも、桜井遥乃丞の活動にご注目いただけますと幸いです。
+                </p>
+            </article>
+
+            <!-- トップへ戻るリンク -->
+            <div class="mt-16 text-center">
+                <a href="index.html#insights" class="eng-font text-sm font-semibold text-[var(--accent-color-1)] hover:underline">
+                    ← INSIGHTS一覧へ戻る
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="py-20 bg-gray-100">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-sm text-[var(--accent-color-2)]">&copy; 2025 Harunosuke Sakurai. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
