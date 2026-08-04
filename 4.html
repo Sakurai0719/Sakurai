@@ -480,7 +480,7 @@
             "自己ベスト更新や大会での活躍が『金』になる。プロの世界へようこそ。",
             "体つきは悪くないな。まずはそのPBを超えて金を稼げ。"
         ],
-        inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。"],
+         inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。"],
         inj_3: ["一番伸びる時期に何やってるんだ。これじゃスポンサーもつかんぞ。","お前が抜けた穴を後輩が埋めるんだぞ。不甲斐ないと思え。","ピーキングの概念をまだ理解してないのか。"],
         inj_4: ["最後の年だぞ？引退までリハビリルームで過ごすつもりか。","4年間の集大成が故障か。プロへの道は厳しいぞ。","悲劇のヒロインぶるな。自分が招いた結果だろ。"],
         pb_first: ["大学初のベストか。賞金が入ったな。自己投資に回せ。","ようやくスタートラインだ。勘違いして浮かれるなよ。"],
@@ -491,9 +491,12 @@
         under_1_2: ["なんだそのチキンレースは。金払って出場してる自覚を持て。","周りに飲まれて自分の走りを見失うとは。アマチュア以下だ。"],
         under_3_4: ["上級生がそのザマか。まだピーキングもできないのか。","大事な場面でこのタイム…。お前にはもう期待しない方がいいか。"],
         over: ["条件が良かったな。地力を伸ばせ","速い選手じゃなくて強い選手を目指せ。"],
-        med: ["よくやった。賞金で美味いもんでも食え。いや、自己投資しろ。","つくばんざい！つくばんざい！つくつくつくつくつくばんざい！！！"],
+        win: ["つくばんざい！つくばんざい！つくつくつくつくつくばんざい！！！", "完璧なレース展開だった。文句なしの優勝だ！"],
+        med: ["よくやった。賞金で美味いもんでも食え。いや、自己投資しろ。","表彰台に乗って満足そうな顔するな。次はてっぺん取れ。"],
         relay: ["リレーだけはまともに走るんだな。個人でもそれくらいやれ。","お前のラップ、ブレーキになりかけてたぞ。映像見返せ。"],
-        rec: ["記録更新？これでトッププロの仲間入りだな。","まさかお前がここまでやるとはな。私の教え子ながら恐ろしいよ。"],
+        rec_student: ["🎓 学生新記録！大学陸上界に名を刻んだな。", "学生の枠組みを超えた走りだ。次は日本の頂点を目指せ。"],
+        rec_japan: ["🇯🇵 日本新記録！ついに日本の歴史を塗り替えたな。", "素晴らしい走りだ。これで日本国内にはもう敵はいない。"],
+        rec_world: ["🌍 世界新記録だと！？人類の限界を超えたぞ！", "まさか私の教え子から世界記録保持者が出るとはな...誇りに思うよ。"],
         effort_low_summer: ["サボって金が稼げるほどプロは甘くないぞ。","やる気がないならさっさと枠を譲れ。邪魔だ。"],
         effort_low_winter: ["冬の走り込みをサボる奴に春は来ないぞ。","寒さに負けてジョグで終わらせてるようじゃ、来年も同じタイムだ。"],
         effort_high_summer: ["夏場にそんな無理したらぶっ倒れるぞ。ケア道具は買ったか？","限界の先を見たけりゃ、もっと賢くやれ。"],
@@ -510,13 +513,21 @@
         return comments[Math.floor(Math.random() * comments.length)];
     };
 
+    const getRecEvent = (recM) => {
+        if(recM.includes("世界")) return "rec_world";
+        if(recM.includes("日本")) return "rec_japan";
+        if(recM.includes("学生")) return "rec_student";
+        return "rec_student";
+    };
+
     const upCoach = (ev, e = 5) => {
         let p = agents[pId];
         let grade = p ? p.grade : 1;
         let isWinter = phase === 'winter' || phase === 'new-year';
         let category = 'effort_normal_summer';
 
-        if (ev === 'inj') category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
+        if (ev === 'first_look') category = 'first_look';
+        else if (ev === 'inj') category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
         else if (ev === 'pb') {
             let pbCount = p.logs.filter(l => l.pb).length;
             let recentPbs = p.logs.slice(-3).filter(l => l.pb).length;
@@ -527,9 +538,12 @@
             else category = 'pb_4';
         } else if (ev === 'under') category = grade <= 2 ? 'under_1_2' : 'under_3_4';
         else if (ev === 'over') category = 'over';
+        else if (ev === 'win') category = 'win';
         else if (ev === 'med') category = 'med';
         else if (ev === 'relay') category = 'relay';
-        else if (ev === 'rec') category = 'rec';
+        else if (ev === 'rec_world') category = 'rec_world';
+        else if (ev === 'rec_japan') category = 'rec_japan';
+        else if (ev === 'rec_student') category = 'rec_student';
         else if (ev === 'not_qualified') category = grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4';
         else {
             let suffix = isWinter ? '_winter' : '_summer';
@@ -679,12 +693,12 @@
         }
 
         let pData = {
-            'spring-sel': ['春（関東インカレ選考）', 'spring-sel'],
-            'spring-main': ['春（関東インカレ本戦）', 'spring-main'],
+            'spring-sel': ['春（春インカレ選考）', 'spring-sel'],
+            'spring-main': ['春（春インカレ本戦）', 'spring-main'],
             'japan-champ': ['初夏（日本選手権）', 'japan-champ'],
             'summer-prac': ['夏（練習・賞金大会）', 'summer-prac'],
-            'autumn-sel': ['秋（日本インカレ選考）', 'autumn-sel'],
-            'autumn-main': ['秋（日本インカレ本戦）', 'autumn-main'],
+            'autumn-sel': ['秋（秋インカレ選考）', 'autumn-sel'],
+            'autumn-main': ['秋（秋インカレ本戦）', 'autumn-main'],
             'intl-champ': ['秋（国際大会）', 'intl-champ'],
             'winter': ['冬（冬季練習）', 'winter'],
             'new-year': ['新年度', 'new-year']
@@ -740,7 +754,7 @@
             let statEl = getEl(`${pData[1]}-status`);
             if(statEl) statEl.innerHTML = q ? "<span class='success'>✅ 出場</span>" : "<span class='injury'>❌ 敗退</span>";
             let btnEl = getEl(`btn-${pData[1]}`);
-            if(btnEl) btnEl.innerText = q ? "本戦に出走 (遠征費5,000円)" : "応援する";
+            if(btnEl) btnEl.innerText = q ? "本戦に出走 (遠征費5,000円)" : "見守る";
 
             let rData = curRelayData.find(d => d.u === UNIVS[0]);
             let pfx = pData[1] === 'spring-main' ? 'spring' : 'autumn';
@@ -965,7 +979,7 @@
             
             let me = myTeam.find(p=>p.a.isPlayer), rank = myTeam.indexOf(me)+1, q = curQuals.includes(agents[pId]), msg = `[${tName}選考] ${rank}位 (${me.res.time.toFixed(2)}秒)`;
             let tHtml = `選考 ${rank}位！`, tCls = "info", cEv = "normal_effort";
-            if(me.res.recM) { msg+=` <b style="color:#e74c3c">${me.res.recM}</b>`; tHtml=`${me.res.recM}<br>★PB更新★`; tCls="medal"; cEv="rec"; }
+            if(me.res.recM) { msg+=` <b style="color:#e74c3c">${me.res.recM}</b>`; tHtml=`${me.res.recM}<br>★PB更新★`; tCls="medal"; cEv=getRecEvent(me.res.recM); }
             else if(me.res.isPB) { msg+=` ★PB`; tHtml+=`<br>★PB★`; tCls="pb"; cEv="pb"; }
             
             if(q) { tHtml+=`<br>🎉 出場決定！`; tCls=tCls==="medal"?"medal":"success"; msg+=` 🎉本戦出場!`; } else { tHtml+=`<br>❌ 落選`; tCls=tCls.includes("pb")||tCls==="medal"?tCls:"fail"; msg+=` ❌落選`; }
@@ -1006,7 +1020,8 @@
                 let tm = `${tName} ${r}位！`;
                 if (prz > 0) tm += `<br>賞金 ${prz.toLocaleString()}円！`;
                 
-                if(p.res.recM) { tm = `${p.res.recM}<br>${tm}`; cEv="rec"; showToast(tm, "medal"); }
+                if(p.res.recM) { tm = `${p.res.recM}<br>${tm}`; cEv=getRecEvent(p.res.recM); showToast(tm, "medal"); }
+                else if(r===1) { showToast(tm,"medal"); cEv="win"; }
                 else if(r<=3) { showToast(tm,"medal"); cEv="med"; } 
                 else if(r<=8) { showToast(tm,"success"); cEv="over"; } 
                 else { showToast(tm,"info"); cEv="normal_effort"; }
@@ -1036,8 +1051,8 @@
 
     function executeMain(tName, std) {
         let fee = 0;
-        if (tName === '関東インカレ' || tName === '日本インカレ') fee = 5000;
-        else if (tName === '日本選手権') fee = 5000;
+        if (tName === '春インカレ' || tName === '秋インカレ') fee = 5000;
+        else if (tName === '日本選手権') fee = 20000;
         else if (tName === '国際大会') fee = 0;
 
         let p = agents[pId];
@@ -1121,10 +1136,10 @@
     };
 
     const closeTournamentScreen = () => { 
-        if (curTourney === '関東インカレ') { setPhase('japan-champ'); }
+        if (curTourney === '春インカレ') { setPhase('japan-champ'); }
         else if (curTourney === '日本選手権') { setPhase('summer-prac'); }
         else if (curTourney === '夏・グランプリ') { setPhase('autumn-sel'); }
-        else if (curTourney === '関東インカレ') { setPhase('intl-champ'); }
+        else if (curTourney === '秋インカレ') { setPhase('intl-champ'); }
         else if (curTourney === '国際大会') { setPhase('winter'); }
         else { setPhase('winter'); }
     };
@@ -1261,7 +1276,7 @@
             if(!isWinter && m>0) {
                 let pbs = p.logs.slice(-m).filter(l=>l.pb);
                 msg+=`<br>└ ベスト: ${p.lastTime.toFixed(2)}秒 ${pbs.length?"<span class='highlight'>★PB!</span>":""}`;
-                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += ` <b style="color:#e74c3c">${recM_player}</b>`; upCoach("rec", p_e); }
+                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += ` <b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player), p_e); }
                 else if(pbs.length) { showToast("記録会<br>★PB更新★","pb"); upCoach("pb", p_e); } 
                 else upCoach("normal_effort", p_e);
             } else { 
