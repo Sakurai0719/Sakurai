@@ -397,7 +397,7 @@
         spike: {
             costs: [0, 5000, 15000, 30000, 50000, 100000, 200000, 300000, 500000, 600000, 800000],
             effects: [0, 0.02, 0.05, 0.10, 0.15, 0.25, 0.35, 0.45, 0.55, 0.60, 0.70],
-            names: ["なし", "入門用スパイク", "軽量スパイク", "中級者用スパイク", "反発重視スパイク", "上級者用スパイク", "トップモデルスパイク", "カスタムオーダースパイク", "エリート専用スパイク", "プロトタイプ(初期型)", "プロトタイプカーボン"]
+            names: ["なし", "土用スパイク", "シティウスウイング", "SPBlade", "スーパーフライエリート", "プライムSP3", "プライムSP5", "オーダースパイク", "キック力増強シューズ", "超改造脚", "完全生命体"]
         }
     };
     let careLevel = 0;
@@ -452,11 +452,18 @@
             if (isPB) { 
                 this.pb = t; 
                 if (this.isPlayer) this.money += 20000; 
-                let msg = t < 43.03 ? "🌍 世界新記録！" : t < 44.44 ? "🇯🇵 日本新記録！" : t < 44.98 ? "🎓 学生新記録！" : null;
+                let msg = null;
+                if (t < 43.03) {
+                    msg = "🌍 世界新記録！";
+                } else if (t < 44.44 && this.univ !== "海外") {
+                    msg = "🇯🇵 日本新記録！";
+                } else if (t < 44.98 && this.grade <= 4) {
+                    msg = "🎓 学生新記録！";
+                }
                 if (msg && !this.recFlags[msg]) {
                     recM = msg; this.recFlags[msg] = true;
                     if (this.isPlayer) {
-                        this.money += t < 43.03 ? 1000000 : t < 44.44 ? 500000 : 200000;
+                        this.money += msg === "🌍 世界新記録！" ? 1000000 : msg === "🇯🇵 日本新記録！" ? 500000 : 200000;
                     }
                 }
             }
@@ -473,25 +480,25 @@
             "自己ベスト更新や大会での活躍が『金』になる。プロの世界へようこそ。",
             "体つきは悪くないな。まずはそのPBを超えて金を稼げ。"
         ],
-        inj_1_2: ["プロ意識が足りん。自己管理も仕事のうちだぞ。","怪我で休んでる間は金は稼げない。早く治せ。","痛いアピールはいい。周りの足手まといになるな。"],
+        inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。"],
         inj_3: ["一番伸びる時期に何やってるんだ。これじゃスポンサーもつかんぞ。","お前が抜けた穴を後輩が埋めるんだぞ。不甲斐ないと思え。","ピーキングの概念をまだ理解してないのか。"],
         inj_4: ["最後の年だぞ？引退までリハビリルームで過ごすつもりか。","4年間の集大成が故障か。プロへの道は厳しいぞ。","悲劇のヒロインぶるな。自分が招いた結果だろ。"],
         pb_first: ["大学初のベストか。賞金が入ったな。自己投資に回せ。","ようやくスタートラインだ。勘違いして浮かれるなよ。"],
-        pb_1_2: ["ベスト更新か。金稼いでスパイクでも買い替えろ。","タイムは出たが、後半の失速が酷いな。後半型とか言ってる場合か？"],
-        pb_3: ["ようやく上級生らしいタイムが出たな。遅すぎる覚醒だ。","意地を見せたな。これをコンスタントに出せないと意味がないぞ。"],
+        pb_1_2: ["ベスト更新か。金稼いでスパイクでも買い替えろ。","まずはおめでとう。調子乗るなよ"],
+        pb_3: ["ようやく上級生らしいタイムが出たな。いい士気上げだ。","意地を見せたな。これをコンスタントに出せないと意味がないぞ。"],
         pb_4: ["最後の最後でようやく殻を破ったか。もっと早くやれ。","引退間近で自己満のタイム出して嬉しいか？結果を残せ。"],
         pb_long: ["長かったな。この1秒を削り出すのにどれだけ時間かけたか考えろ。","どん底から這い上がったな。ここから巻き返せ。"],
         under_1_2: ["なんだそのチキンレースは。金払って出場してる自覚を持て。","周りに飲まれて自分の走りを見失うとは。アマチュア以下だ。"],
-        under_3_4: ["上級生がそのザマか。プロの世界じゃ生きていけないぞ。","大事な場面でこのタイム…。お前にはもう期待しない方がいいか。"],
-        over: ["結果は出たが、内容は褒められたもんじゃない。","大舞台の魔物はお前に味方したようだな。思い上がるなよ。"],
-        med: ["よくやった。賞金で美味いもんでも食え。いや、自己投資しろ。","表彰台に乗って満足そうな顔するな。次はてっぺん取れ。"],
+        under_3_4: ["上級生がそのザマか。まだピーキングもできないのか。","大事な場面でこのタイム…。お前にはもう期待しない方がいいか。"],
+        over: ["条件が良かったな。地力を伸ばせ","速い選手じゃなくて強い選手を目指せ。"],
+        med: ["よくやった。賞金で美味いもんでも食え。いや、自己投資しろ。","つくばんざい！つくばんざい！つくつくつくつくつくばんざい！！！"],
         relay: ["リレーだけはまともに走るんだな。個人でもそれくらいやれ。","お前のラップ、ブレーキになりかけてたぞ。映像見返せ。"],
         rec: ["記録更新？これでトッププロの仲間入りだな。","まさかお前がここまでやるとはな。私の教え子ながら恐ろしいよ。"],
         effort_low_summer: ["サボって金が稼げるほどプロは甘くないぞ。","やる気がないならさっさと枠を譲れ。邪魔だ。"],
         effort_low_winter: ["冬の走り込みをサボる奴に春は来ないぞ。","寒さに負けてジョグで終わらせてるようじゃ、来年も同じタイムだ。"],
         effort_high_summer: ["夏場にそんな無理したらぶっ倒れるぞ。ケア道具は買ったか？","限界の先を見たけりゃ、もっと賢くやれ。"],
         effort_high_winter: ["冬にそこまで追い込むのはいいが、春まで持たないぞ。","量に逃げるな。質を考えた冬にしろ。"],
-        effort_normal_summer: ["可もなく不可もなく。無難に夏を越すつもりか？","現状維持は退化だぞ。どこかで限界を超えないと伸びないぞ。"],
+        effort_normal_summer: ["無難な練習ばっかだな。無難な夏でいいのか","いい感じ。"],
         effort_normal_winter: ["地道な積み重ねは評価する。だが殻を破る瞬間が必要だ。","無難な冬季練習だな。来春も無難なタイムしか出ないぞ。"],
         not_qualified_1_2: ["スタンドからの応援、悔しいか？来年はトラックに立て。","これがレベルの差だ。自分の現在地を知るいい機会になったな。"],
         not_qualified_3: ["後輩に枠を奪われて恥ずかしくないのか？意地を見せろ。","もう『来年がある』なんて甘い言葉は通用しない時期だぞ。"],
@@ -672,12 +679,12 @@
         }
 
         let pData = {
-            'spring-sel': ['春（春インカレ選考）', 'spring-sel'],
-            'spring-main': ['春（春インカレ本戦）', 'spring-main'],
+            'spring-sel': ['春（関東インカレ選考）', 'spring-sel'],
+            'spring-main': ['春（関東インカレ本戦）', 'spring-main'],
             'japan-champ': ['初夏（日本選手権）', 'japan-champ'],
             'summer-prac': ['夏（練習・賞金大会）', 'summer-prac'],
-            'autumn-sel': ['秋（秋インカレ選考）', 'autumn-sel'],
-            'autumn-main': ['秋（秋インカレ本戦）', 'autumn-main'],
+            'autumn-sel': ['秋（日本インカレ選考）', 'autumn-sel'],
+            'autumn-main': ['秋（日本インカレ本戦）', 'autumn-main'],
             'intl-champ': ['秋（国際大会）', 'intl-champ'],
             'winter': ['冬（冬季練習）', 'winter'],
             'new-year': ['新年度', 'new-year']
@@ -733,7 +740,7 @@
             let statEl = getEl(`${pData[1]}-status`);
             if(statEl) statEl.innerHTML = q ? "<span class='success'>✅ 出場</span>" : "<span class='injury'>❌ 敗退</span>";
             let btnEl = getEl(`btn-${pData[1]}`);
-            if(btnEl) btnEl.innerText = q ? "本戦に出走 (遠征費5,000円)" : "見守る";
+            if(btnEl) btnEl.innerText = q ? "本戦に出走 (遠征費5,000円)" : "応援する";
 
             let rData = curRelayData.find(d => d.u === UNIVS[0]);
             let pfx = pData[1] === 'spring-main' ? 'spring' : 'autumn';
@@ -772,7 +779,7 @@
             let elAct = getEl('intl-action');
             if (qual <= 45.50) {
                 elStat.innerHTML = `<span class="success">✅ 世界への切符を獲得！</span> (資格: ${qual.toFixed(2)}秒)`;
-                elAct.innerHTML = `<button onclick="executeMain('国際大会', 45.50)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded">世界に挑む (遠征費100,000円)</button>`;
+                elAct.innerHTML = `<button onclick="executeMain('国際大会', 45.50)" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded">世界に挑む (遠征費無料・報奨金あり)</button>`;
             } else {
                 elStat.innerHTML = `<span class="injury">❌ 標準未達</span> (資格: ${qual.toFixed(2)}秒)`;
                 elAct.innerHTML = `<button onclick="skipTournament('国際大会', 45.50, 'winter')" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 rounded">スキップして冬期練習へ</button>`;
@@ -1029,9 +1036,9 @@
 
     function executeMain(tName, std) {
         let fee = 0;
-        if (tName === '春インカレ' || tName === '秋インカレ') fee = 5000;
-        else if (tName === '日本選手権') fee = 20000;
-        else if (tName === '国際大会') fee = 100000;
+        if (tName === '関東インカレ' || tName === '日本インカレ') fee = 5000;
+        else if (tName === '日本選手権') fee = 5000;
+        else if (tName === '国際大会') fee = 0;
 
         let p = agents[pId];
         
@@ -1042,12 +1049,19 @@
         }
 
         if (curQuals.includes(p)) {
-            if (p.money < fee) {
-                log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態）`);
-            } else {
-                log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。`);
+            if (fee > 0) {
+                if (p.money < fee) {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態）`);
+                } else {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。`);
+                }
+                p.money -= fee;
             }
-            p.money -= fee;
+            if (tName === '国際大会') {
+                let bonus = (Math.floor(Math.random() * 6) + 5) * 10000; // 5万〜10万
+                p.money += bonus;
+                log(`✈️ 国際大会出場ボーナス（日本陸連より）: ${bonus.toLocaleString()}円を獲得しました！`);
+            }
         }
 
         let isKanto = tName.includes('インカレ');
@@ -1065,7 +1079,6 @@
             d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - careEff));
         });
 
-        pData.sort(() => Math.random() - 0.5);
         if (pData.length > 8) {
             pData.sort((a,b) => a.res.time - b.res.time);
             let meIdx = pData.findIndex(d => d.a.isPlayer);
@@ -1076,6 +1089,9 @@
             }
             pData = final8;
         }
+        
+        // アニメーションのレーン（並び順）をランダムにする
+        pData.sort(() => Math.random() - 0.5);
         
         curTourney = tName;
         runAnim(`🏆 ${tName} 本戦`, pData, () => {
@@ -1105,10 +1121,10 @@
     };
 
     const closeTournamentScreen = () => { 
-        if (curTourney === '春インカレ') { setPhase('japan-champ'); }
+        if (curTourney === '関東インカレ') { setPhase('japan-champ'); }
         else if (curTourney === '日本選手権') { setPhase('summer-prac'); }
         else if (curTourney === '夏・グランプリ') { setPhase('autumn-sel'); }
-        else if (curTourney === '秋インカレ') { setPhase('intl-champ'); }
+        else if (curTourney === '関東インカレ') { setPhase('intl-champ'); }
         else if (curTourney === '国際大会') { setPhase('winter'); }
         else { setPhase('winter'); }
     };
