@@ -216,7 +216,6 @@
             </div>
             
             <div class="side-col">
-                <!-- Shop Panel -->
                 <div class="shop-panel shadow">
                     <h3 class="text-lg font-bold mb-3 text-blue-800 flex items-center">🛒 自己投資（ショップ）</h3>
                     <div class="mb-3 text-base font-bold text-gray-800 bg-white p-2 rounded border text-center">
@@ -276,6 +275,11 @@
     <div id="screen-tournament" class="screen bg-white p-6 rounded-lg shadow-xl">
         <h2 id="tourney-title" class="text-2xl font-bold text-center text-gray-800 mb-1"></h2>
         <p id="tourney-subtitle" class="text-center text-gray-500 mb-4"></p>
+        
+        <div class="coach-comment text-sm mb-4">
+            👨‍練 <strong>コーチ:</strong> <span id="tourney-coach-message"></span>
+        </div>
+
         <div class="max-h-[400px] overflow-y-auto border border-gray-200 rounded">
             <table class="w-full">
                 <thead><tr><th class="py-2">順位</th><th class="py-2">大学</th><th class="py-2">選手</th><th class="py-2">タイム</th><th class="py-2">備考</th></tr></thead>
@@ -288,6 +292,11 @@
     <div id="screen-relay" class="screen bg-white p-6 rounded-lg shadow-xl">
         <h2 id="relay-title" class="text-2xl font-bold text-center text-gray-800 mb-4">マイルリレー リザルト</h2>
         <div id="relay-results-container" class="max-h-[450px] overflow-y-auto border border-gray-200 p-3 rounded bg-gray-50"></div>
+        
+        <div class="coach-comment text-sm mb-4 mt-4">
+            👨‍練 <strong>コーチ:</strong> <span id="relay-coach-message"></span>
+        </div>
+
         <div class="text-center mt-6"><button onclick="closeTournamentScreen()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded">次のシーズンへ</button></div>
     </div>
 
@@ -480,7 +489,7 @@
             "自己ベスト更新や大会での活躍が『金』になる。プロの世界へようこそ。",
             "体つきは悪くないな。まずはそのPBを超えて金を稼げ。"
         ],
-         inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。"],
+        inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。"],
         inj_3: ["一番伸びる時期に何やってるんだ。これじゃスポンサーもつかんぞ。","お前が抜けた穴を後輩が埋めるんだぞ。不甲斐ないと思え。","ピーキングの概念をまだ理解してないのか。"],
         inj_4: ["最後の年だぞ？引退までリハビリルームで過ごすつもりか。","4年間の集大成が故障か。プロへの道は厳しいぞ。","悲劇のヒロインぶるな。自分が招いた結果だろ。"],
         pb_first: ["大学初のベストか。賞金が入ったな。自己投資に回せ。","ようやくスタートラインだ。勘違いして浮かれるなよ。"],
@@ -505,7 +514,9 @@
         effort_normal_winter: ["地道な積み重ねは評価する。だが殻を破る瞬間が必要だ。","無難な冬季練習だな。来春も無難なタイムしか出ないぞ。"],
         not_qualified_1_2: ["スタンドからの応援、悔しいか？来年はトラックに立て。","これがレベルの差だ。自分の現在地を知るいい機会になったな。"],
         not_qualified_3: ["後輩に枠を奪われて恥ずかしくないのか？意地を見せろ。","もう『来年がある』なんて甘い言葉は通用しない時期だぞ。"],
-        not_qualified_4: ["最後の年でスタンドか。これが4年間のお前の実力だ。","出られないお前の分まで走る仲間のために声を出せ。"]
+        not_qualified_4: ["最後の年でスタンドか。これが4年間のお前の実力だ。","出られないお前の分まで走る仲間のために声を出せ。"],
+        qualified_1_2: ["下級生で代表枠を勝ち取ったか。だが参加するだけじゃ意味がないぞ。","よくやった。だが本番はこれからだ。先輩の胸を借りるつもりで走れ。","ここからが本当の勝負だ。大学のトップレベルを肌で感じてこい。"],
+        qualified_3_4: ["上級生としての意地を見せたな。本戦でも頼むぞ。","当然の結果だ。お前がチームを引っ張らなきゃ誰がやるんだ。","お前の走りでチームに勢いをつけてこい。期待してるぞ。"]
     };
 
     const getRandomComment = (category) => {
@@ -545,13 +556,18 @@
         else if (ev === 'rec_japan') category = 'rec_japan';
         else if (ev === 'rec_student') category = 'rec_student';
         else if (ev === 'not_qualified') category = grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4';
+        else if (ev === 'qualified') category = grade <= 2 ? 'qualified_1_2' : 'qualified_3_4';
         else {
             let suffix = isWinter ? '_winter' : '_summer';
             if (e >= 8.0) category = 'effort_high' + suffix;
             else if (e <= 4.0) category = 'effort_low' + suffix;
             else category = 'effort_normal' + suffix;
         }
-        if(getEl('coach-message')) getEl('coach-message').innerHTML = getRandomComment(category);
+        
+        let msg = getRandomComment(category);
+        if(getEl('coach-message')) getEl('coach-message').innerHTML = msg;
+        if(getEl('tourney-coach-message')) getEl('tourney-coach-message').innerHTML = msg;
+        if(getEl('relay-coach-message')) getEl('relay-coach-message').innerHTML = msg;
     };
 
     function updateRisk() {
@@ -686,7 +702,6 @@
         if(!agents || !agents[pId]) return;
         let p = agents[pId];
 
-        // Reset special food on phase change
         if (currentPhaseTracker !== phase) {
             usedSpecialFood = false;
             currentPhaseTracker = phase;
@@ -976,18 +991,9 @@
         
         runAnim(`🏃 選考会 (${tName})`, myTeam, () => {
             myTeam.sort((a,b)=>a.res.time - b.res.time);
-            
-            let me = myTeam.find(p=>p.a.isPlayer), rank = myTeam.indexOf(me)+1, q = curQuals.includes(agents[pId]), msg = `[${tName}選考] ${rank}位 (${me.res.time.toFixed(2)}秒)`;
-            let tHtml = `選考 ${rank}位！`, tCls = "info", cEv = "normal_effort";
-            if(me.res.recM) { msg+=` <b style="color:#e74c3c">${me.res.recM}</b>`; tHtml=`${me.res.recM}<br>★PB更新★`; tCls="medal"; cEv=getRecEvent(me.res.recM); }
-            else if(me.res.isPB) { msg+=` ★PB`; tHtml+=`<br>★PB★`; tCls="pb"; cEv="pb"; }
-            
-            if(q) { tHtml+=`<br>🎉 出場決定！`; tCls=tCls==="medal"?"medal":"success"; msg+=` 🎉本戦出場!`; } else { tHtml+=`<br>❌ 落選`; tCls=tCls.includes("pb")||tCls==="medal"?tCls:"fail"; msg+=` ❌落選`; }
-            log(msg); showToast(tHtml, tCls); upCoach(agents[pId].isInjured?"inj":cEv);
-            curTourney = tName; 
-            
+            curTourney = tName + '選考';
             determineRelayTeams();
-            setPhase(tName === '春インカレ' ? 'spring-main' : 'autumn-main');
+            showTournamentResult(curTourney, myTeam);
         });
     }
 
@@ -996,38 +1002,52 @@
         getEl('screen-tournament').classList.add('active');
         getEl('tourney-title').innerText = `🏆 ${year}年 ${tName}`; 
         
-        let isKanto = tName.includes('インカレ');
+        let isSelection = tName.includes('選考');
+        let isKanto = tName.includes('インカレ') && !isSelection;
         let univs = isKanto ? UNIVS.slice(0,5) : tName === '国際大会' ? ["海外","日本代表"] : UNIVS;
         getEl('tourney-subtitle').innerText = `400m 決勝 (${pData.length}名) - タップで成績推移`;
         
         let cEv = "normal_effort";
-        getEl('tourney-table-body').innerHTML = pData.map((p,i) => {
-            let r=i+1, rem="", cls = p.a.isPlayer ? "player-row" : p.a.univ===UNIVS[0] ? "teammate-row" : "";
+        let p = agents[pId];
+        
+        getEl('tourney-table-body').innerHTML = pData.map((d,i) => {
+            let r=i+1, rem="", cls = d.a.isPlayer ? "player-row" : d.a.univ===UNIVS[0] ? "teammate-row" : "";
             let prz = getPrize(tName, r);
             
-            if(r===1){rem="<span class='medal-gold'>🥇 優勝</span>";} 
-            else if(r===2){rem="<span class='medal-silver'>🥈 2位</span>";} 
-            else if(r===3){rem="<span class='medal-bronze'>🥉 3位</span>";} 
-            else if(r<=8){rem="🎖️ 入賞";}
-            
-            if (prz > 0) rem += `<br><span class="text-green-600 font-bold">+${prz.toLocaleString()}円</span>`;
-            if(p.res.recM) rem += `<br><b style="color:#e74c3c;font-size:12px">${p.res.recM}</b>`;
-            
-            p.a.logs.push({n:`${year}年 ${tName}`, t:p.res.time, pb:p.res.isPB, inj:p.a.isInjured, r});
-            
-            if(p.a.isPlayer) {
-                p.a.money += prz;
-                let tm = `${tName} ${r}位！`;
-                if (prz > 0) tm += `<br>賞金 ${prz.toLocaleString()}円！`;
+            if (!isSelection) {
+                if(r===1){rem="<span class='medal-gold'>🥇 優勝</span>";} 
+                else if(r===2){rem="<span class='medal-silver'>🥈 2位</span>";} 
+                else if(r===3){rem="<span class='medal-bronze'>🥉 3位</span>";} 
+                else if(r<=8){rem="🎖️ 入賞";}
                 
-                if(p.res.recM) { tm = `${p.res.recM}<br>${tm}`; cEv=getRecEvent(p.res.recM); showToast(tm, "medal"); }
-                else if(r===1) { showToast(tm,"medal"); cEv="win"; }
-                else if(r<=3) { showToast(tm,"medal"); cEv="med"; } 
-                else if(r<=8) { showToast(tm,"success"); cEv="over"; } 
+                if (prz > 0) rem += `<br><span class="text-green-600 font-bold">+${prz.toLocaleString()}円</span>`;
+            } else {
+                if (curQuals.includes(d.a)) {
+                    rem += "<span class='success font-bold'>✅ 本戦出場</span>";
+                } else {
+                    rem += "<span class='text-gray-500'>❌ 落選</span>";
+                }
+            }
+            
+            if(d.res.recM) rem += `<br><b style="color:#e74c3c;font-size:12px">${d.res.recM}</b>`;
+            
+            d.a.logs.push({n:`${year}年 ${tName}`, t:d.res.time, pb:d.res.isPB, inj:d.a.isInjured, r});
+            
+            if(d.a.isPlayer) {
+                if (!isSelection) d.a.money += prz;
+                
+                let tm = isSelection ? `選考会 ${r}位！` : `${tName} ${r}位！`;
+                if (!isSelection && prz > 0) tm += `<br>賞金 ${prz.toLocaleString()}円！`;
+                
+                if(d.res.recM) { tm = `${d.res.recM}<br>${tm}`; cEv=getRecEvent(d.res.recM); showToast(tm, "medal"); }
+                else if(!isSelection && r===1) { showToast(tm,"medal"); cEv="win"; }
+                else if(!isSelection && r<=3) { showToast(tm,"medal"); cEv="med"; } 
+                else if(!isSelection && r<=8) { showToast(tm,"success"); cEv="over"; } 
+                else if(d.res.isPB) { showToast(`${tm}<br>★PB★`,"pb"); cEv="pb"; }
                 else { showToast(tm,"info"); cEv="normal_effort"; }
             }
             
-            return `<tr class="clickable-row ${cls}" onclick="showAgentModal(${p.a.id})"><td>${r}</td><td>${p.a.univ}</td><td>${p.a.name}</td><td>${p.res.time.toFixed(2)}秒 ${p.res.isPB?"<b style='color:#f39c12'>★PB</b>":""}</td><td>${rem}</td></tr>`;
+            return `<tr class="clickable-row ${cls}" onclick="showAgentModal(${d.a.id})"><td>${r}</td><td>${d.a.univ}</td><td>${d.a.name}</td><td>${d.res.time.toFixed(2)}秒 ${d.res.isPB?"<b style='color:#f39c12'>★PB</b>":""}</td><td>${rem}</td></tr>`;
         }).join('');
         
         let btn = getEl('tourney-next-btn');
@@ -1035,15 +1055,25 @@
             btn.innerText = "🔥 マイルリレーへ";
             btn.onclick = executeRelay;
         } else {
-            btn.innerText = "⏭️ 次のシーズンへ";
+            btn.innerText = isSelection ? "ダッシュボードへ戻る" : "⏭️ 次のシーズンへ";
             btn.onclick = closeTournamentScreen;
         }
         
-        let isPlayerIn = pData.some(p => p.a.isPlayer);
-        if (isPlayerIn) {
-            upCoach(agents[pId].isInjured ? "inj" : cEv);
+        let isPlayerIn = pData.some(d => d.a.isPlayer);
+        
+        if (isSelection) {
+            if (curQuals.includes(p)) {
+                let finalEv = (cEv === "normal_effort" || cEv === "over" || cEv === "under") ? "qualified" : cEv;
+                upCoach(p.isInjured ? "inj" : finalEv);
+            } else {
+                upCoach("not_qualified");
+            }
         } else {
-            upCoach("not_qualified");
+            if (isPlayerIn) {
+                upCoach(p.isInjured ? "inj" : cEv);
+            } else {
+                upCoach("not_qualified");
+            }
         }
 
         recordHistory(`${year}年 ${tName}`);
@@ -1131,14 +1161,12 @@
         setPhase(nextPhase);
     }
 
-    const nextAfterTournament = () => {
-        // Will be overridden dynamically
-    };
-
     const closeTournamentScreen = () => { 
-        if (curTourney === '春インカレ') { setPhase('japan-champ'); }
+        if (curTourney === '春インカレ選考') { setPhase('spring-main'); }
+        else if (curTourney === '春インカレ') { setPhase('japan-champ'); }
         else if (curTourney === '日本選手権') { setPhase('summer-prac'); }
         else if (curTourney === '夏・グランプリ') { setPhase('autumn-sel'); }
+        else if (curTourney === '秋インカレ選考') { setPhase('autumn-main'); }
         else if (curTourney === '秋インカレ') { setPhase('intl-champ'); }
         else if (curTourney === '国際大会') { setPhase('winter'); }
         else { setPhase('winter'); }
@@ -1188,7 +1216,12 @@
                     return `<div class="mb-1"><b>${li+1}走:</b> <span class="clickable-row text-blue-600 underline" onclick="showAgentModal(${l.a.id})">${l.a.name}</span> - ${l.t.toFixed(2)}秒 ${hl}</div>`;
                 }).join(''); return `<div class="relay-box ${isMy?'relay-mine':''}">${h}</div>`;
             }).join('');
-            if(rData.some(d=>d.a.isPlayer)) upCoach(cEv);
+            
+            if(rData.some(d=>d.a.isPlayer)) {
+                upCoach(cEv);
+            } else {
+                upCoach("not_qualified");
+            }
         });
     }
 
@@ -1244,8 +1277,8 @@
 
             // グランプリ参加による疲労加算
             pData.forEach(d => {
-                let careEff = d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
-                d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - careEff));
+                let currentCareEff = d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
+                d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - currentCareEff));
             });
 
             pData.sort((a,b) => a.res.time - b.res.time);
