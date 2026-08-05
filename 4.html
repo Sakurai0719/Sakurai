@@ -77,9 +77,9 @@
 
     <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
         // ご提示いただいた設定
         const firebaseConfig = {
@@ -183,12 +183,15 @@
     </div>
     <!-- ▲▲ RTA即時登録エリア ▲▲ -->
 
-    <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg w-full">次へ進む</button>
+    <div class="flex flex-col md:flex-row justify-center gap-4">
+        <button onclick="openRankingModal()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded shadow-lg text-lg w-full md:w-auto">🏆 ランキングを見る</button>
+        <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg w-full md:w-auto">次へ進む</button>
+    </div>
 </div>
 
-<!-- 🏆 リッチデザイン ランキングモーダル -->
-<div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[9998] hidden" onclick="closeRankingModal()"></div>
-<div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-4 rounded-2xl z-[9999] w-11/12 max-w-3xl max-h-[95vh] hidden shadow-2xl flex flex-col">
+<!-- 🏆 リッチデザイン ランキングモーダル (z-indexをセレブレーションより上に) -->
+<div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[10000] hidden" onclick="closeRankingModal()"></div>
+<div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-4 rounded-2xl z-[10001] w-11/12 max-w-3xl max-h-[95vh] hidden shadow-2xl flex flex-col">
     
     <div class="flex justify-between items-center mb-3">
         <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight">🏆 殿堂入りランキング</h2>
@@ -659,6 +662,9 @@
     let hasClearedThisRun = false;
     let hasRegisteredRanking = false;
     window.hasRegisteredRTA = false;
+    
+    // 周回数カウンター
+    let loopCount = 1;
 
     class Agent {
         constructor(id, initialTime, isPlayer, univName, strat, name) {
@@ -1040,7 +1046,7 @@
         document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
         document.querySelectorAll('.action-panel').forEach(e => e.style.display = 'none');
         getEl('screen-main').classList.add('active'); 
-        getEl('season-title').innerText = `${year}年目 - ${pData[0]}`;
+        getEl('season-title').innerText = `人生${loopCount}周目 ${year}年目 - ${pData[0]}`;
         
         let pnl = getEl(`panel-${pData[1]}`);
         if(pnl) pnl.style.display = 'block';
@@ -1118,9 +1124,11 @@
             window.hasRegisteredRTA = false; // RTA個別フラグ
 
             if (isNGP) {
+                loopCount++;
                 document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
                 getEl('screen-main').classList.add('active');
             } else {
+                loopCount = 1;
                 ngpData = null;
                 window.playerInitialPB = 0;
                 window.injuryCount = 0;
@@ -1205,7 +1213,7 @@
             getEl('log-area').innerHTML = `<div class="mb-2 border-b border-gray-300 pb-2"><strong>1年目開始。</strong></div>`;
             setPhase('spring-sel');
             
-            if (isNGP) log("✨ 【強くてニューゲーム】 資金とアイテムを引き継いで1年目から再スタートしました！");
+            if (isNGP) log(`✨ 【強くてニューゲーム】 資金とアイテムを引き継いで 人生${loopCount}周目 を開始しました！`);
             
             upCoach(isNGP ? 'normal_effort' : 'first_look');
         } catch(e) {
@@ -1377,7 +1385,7 @@
             if (!hasClearedThisRun) {
                 hasClearedThisRun = true;
                 window.gameClearRTA = phaseCount;
-                window.clearTimeString = `${year}年目 秋`;
+                window.clearTimeString = `人生${loopCount}周目 ${year}年目 秋 (計${window.gameClearRTA}ターン)`;
                 setTimeout(() => { showCelebration(p.pb); }, 1000);
             }
         }
@@ -1687,7 +1695,7 @@
                 incoming.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (初期PB: ${a.pb.toFixed(2)}秒)</span><br>`; });
                 nyHtml += `</div>`;
             } else {
-                nyHtml += `<div class="mt-4 text-center font-bold text-lg text-gray-800">4年間の競技生活が終了しました！</div>`;
+                nyHtml += `<div class="mt-4 text-center font-bold text-lg text-gray-800">競技生活の区切りを迎えました！</div>`;
             }
             
             let nyEl = getEl('new-year-content');
@@ -1708,7 +1716,7 @@
         if (year > 4) {
             showEnd();
         } else {
-            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>${year}年目開始。</strong></div>`);
+            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>人生${loopCount}周目 ${year}年目開始。</strong></div>`);
             setPhase('spring-sel');
         }
     }
@@ -1762,7 +1770,8 @@
         btn.disabled = true;
         btn.innerText = "送信中...";
 
-        let e = {tab: 'rta', data: {...pData, val: gameClearRTA, text: clearTimeString}};
+        // ターン数を val に、文字列表現を text に入れる
+        let e = {tab: 'rta', data: {...pData, val: window.gameClearRTA, text: window.clearTimeString}};
         
         let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
         if(!r.rta) r.rta = [];
@@ -1807,8 +1816,8 @@
             entries.push({tab: 'pbCount', data: {...pData, val: pbUpdateCount}});
         }
         
-        if (hasClearedThisRun && gameClearRTA > 0 && !window.hasRegisteredRTA) {
-            entries.push({tab: 'rta', data: {...pData, val: gameClearRTA, text: clearTimeString}});
+        if (hasClearedThisRun && window.gameClearRTA > 0 && !window.hasRegisteredRTA) {
+            entries.push({tab: 'rta', data: {...pData, val: window.gameClearRTA, text: window.clearTimeString}});
             window.hasRegisteredRTA = true; 
         }
 
@@ -1869,7 +1878,8 @@
         if (tab === 'injury') return val + '回';
         if (tab === 'money') return val.toLocaleString() + '円';
         if (tab === 'pbCount') return val + '回';
-        if (tab === 'rta') return text;
+        // textがundefinedならval(ターン数)をフォールバックとして表示
+        if (tab === 'rta') return text || (val + " ターン");
         return val;
     }
 
@@ -1911,7 +1921,7 @@
         if (tab === 'pbDiff' || tab === 'injury' || tab === 'money' || tab === 'pbCount') {
             arr.sort((a,b) => b.val - a.val);
         } else {
-            arr.sort((a,b) => a.val - b.val);
+            arr.sort((a,b) => a.val - b.val); // タイムやRTA(ターン数)は少ない方が上位
         }
         
         let html = '<table class="w-full text-sm border-collapse"><thead class="bg-gray-100 text-gray-700 sticky top-0 z-10 shadow-sm"><tr><th class="py-3 w-16 border-b">順位</th><th class="py-3 border-b">名前</th><th class="py-3 border-b">記録</th><th class="py-3 w-28 border-b">日付</th></tr></thead><tbody>';
@@ -1945,14 +1955,14 @@
         drawResult();
 
         // 登録エリアの表示ロジック
-        if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && gameClearRTA > 0 && !window.hasRegisteredRTA))) {
+        if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && window.gameClearRTA > 0 && !window.hasRegisteredRTA))) {
             let regArea = getEl('ranking-registration-area');
             regArea.classList.remove('hidden'); 
             regArea.style.display = 'block';
             
             let desc = '';
             if (!isNGPFlag) desc += '🌟 1周目限定の全5部門にエントリー可能！<br>';
-            if (hasClearedThisRun && !window.hasRegisteredRTA) desc += `⏱️ 世界優勝RTA（${clearTimeString}）の記録が保存されます！`;
+            if (hasClearedThisRun && !window.hasRegisteredRTA) desc += `⏱️ 世界優勝RTA（${window.clearTimeString}）の記録が保存されます！`;
             getEl('ranking-reg-desc').innerHTML = desc;
         } else {
             getEl('ranking-registration-area').style.display = 'none';
@@ -1962,7 +1972,7 @@
     function drawResult() {
         let a = agents.find(ag=>ag.id===parseInt(getEl('result-agent-select').value));
         if(!a) return;
-        getEl('result-chart-title').innerText = `📈 4年間の軌跡 (${a.name})`;
+        getEl('result-chart-title').innerText = `📈 人生${loopCount}周目の軌跡 (${a.name})`;
         getEl('race-records-body').innerHTML = a.logs.length ? a.logs.map(l => `<tr><td class="py-1">${l.n}</td><td class="py-1">${l.r}</td><td class="py-1">${l.inj?"<span class='injury'>DNS</span>":l.t>60?fmt(l.t):l.t.toFixed(2)+"秒"} ${l.pb?"<b style='color:#f39c12'>★PB</b>":""}</td></tr>`).join('') : "<tr><td colspan='3' class='py-2'>記録なし</td></tr>";
         
         if(charts.res) charts.res.destroy(); if(charts.rac) charts.rac.destroy();
