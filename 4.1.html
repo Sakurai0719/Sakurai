@@ -29,7 +29,6 @@
         .highlight { color: #f1c40f; font-weight: bold; }
         .injury { color: #e74c3c; font-weight: bold; }
         .success { color: #2ecc71; font-weight: bold;}
-        
         table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
         th { background: #2c3e50; color: white; position: sticky; top: 0; z-index: 10; }
@@ -63,16 +62,26 @@
         .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #95a5a6; color: white; border-radius: 50%; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 4px; vertical-align: middle; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .help-icon:hover { background: #34495e; transform: scale(1.1); }
 
+        /* 紙吹雪アニメーション */
+        .confetti { position: absolute; width: 10px; height: 10px; opacity: 0.8; animation: fall linear forwards; pointer-events: none; z-index: 10000; }
+
+        /* ランキングカスタムスクロールバー */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         details > summary { list-style: none; outline: none; }
         details > summary::-webkit-details-marker { display: none; }
     </style>
 
+    <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
-        // Firebase設定
+        // ご提示いただいた設定
         const firebaseConfig = {
             apiKey: "AIzaSyCcm0VxhPW-G4VDiMiXQQtjHAY1Vl25Zwc",
             authDomain: "ikuseiharunosuke.firebaseapp.com",
@@ -130,10 +139,12 @@
             }
         };
     </script>
+    <!-- ▲▲▲ Firebase Online Ranking Setup ▲▲▲ -->
 </head>
 <body>
 <div id="toast-container"></div>
 
+<!-- ヘルプ・エージェントモーダル -->
 <div id="help-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeHelpModal()"></div>
 <div id="help-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg z-[9999] w-11/12 max-w-md hidden shadow-2xl">
     <h3 id="help-title" class="text-xl font-bold mb-2 text-gray-800"></h3>
@@ -152,30 +163,66 @@
     <div class="text-center"><button onclick="closeAgentModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold">閉じる</button></div>
 </div>
 
-<div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeRankingModal()"></div>
-<div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-5 rounded-lg z-[9999] w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto hidden shadow-2xl">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">🏆 殿堂入りランキング</h2>
-    <div class="flex flex-wrap gap-2 mb-4 justify-center">
-        <button onclick="showRankingTab('pb')" class="px-3 py-1 bg-blue-100 hover:bg-blue-200 rounded font-bold text-sm text-blue-800">自己ベスト</button>
-        <button onclick="showRankingTab('pbDiff')" class="px-3 py-1 bg-green-100 hover:bg-green-200 rounded font-bold text-sm text-green-800">成長幅</button>
-        <button onclick="showRankingTab('injury')" class="px-3 py-1 bg-red-100 hover:bg-red-200 rounded font-bold text-sm text-red-800">怪我王</button>
-        <button onclick="showRankingTab('money')" class="px-3 py-1 bg-yellow-100 hover:bg-yellow-200 rounded font-bold text-sm text-yellow-800">稼いだ金額</button>
-        <button onclick="showRankingTab('relay')" class="px-3 py-1 bg-indigo-100 hover:bg-indigo-200 rounded font-bold text-sm text-indigo-800">仲間のため</button>
-        <button onclick="showRankingTab('rta')" class="px-3 py-1 bg-purple-100 hover:bg-purple-200 rounded font-bold text-sm text-purple-800">世界優勝RTA</button>
-    </div>
-    <div id="ranking-content" class="bg-gray-50 p-4 rounded border min-h-[200px] max-h-[400px] overflow-y-auto"></div>
-    <div class="text-center mt-4"><button onclick="closeRankingModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold w-full">閉じる</button></div>
-</div>
-
+<!-- 👑 世界優勝セレブレーション モーダル -->
 <div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[9998] hidden"></div>
-<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400">
+<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400 max-h-[90vh] overflow-y-auto">
     <h2 class="text-4xl font-extrabold text-yellow-500 mb-4">👑 WORLD CHAMPION!</h2>
     <p class="text-lg text-gray-700 font-bold mb-6">ついに世界大会での優勝を果たしました！</p>
+    
     <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6 text-left">
         <p class="font-bold text-gray-800 mb-2">👨‍💻 開発者 ハルノスケより</p>
         <p id="celeb-msg" class="text-sm text-gray-700 leading-relaxed"></p>
     </div>
-    <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">次へ進む</button>
+
+    <!-- ▼▼ RTA即時登録エリア ▼▼ -->
+    <div id="celeb-rta-area" class="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg mb-6 shadow-inner">
+        <h3 class="font-bold text-purple-800 mb-2 text-lg">👑 世界優勝RTA 記録登録</h3>
+        <p class="text-sm text-gray-700 mb-3">クリアタイム： <span id="celeb-rta-time" class="font-extrabold text-purple-700 text-xl"></span></p>
+        <input type="text" id="celeb-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border-2 border-purple-200 p-3 rounded w-full md:w-48 text-center font-bold mb-2 md:mb-0 md:mr-2" value="ハルノスケ">
+        <button id="celeb-reg-btn" onclick="registerRTAFromCeleb()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded shadow-md transition-transform transform hover:scale-105 w-full md:w-auto">送信する</button>
+    </div>
+    <!-- ▲▲ RTA即時登録エリア ▲▲ -->
+
+    <div class="flex flex-col md:flex-row justify-center gap-4">
+        <button onclick="openRankingModal()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded shadow-lg text-lg w-full md:w-auto">🏆 ランキングを見る</button>
+        <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg w-full md:w-auto">次へ進む</button>
+    </div>
+</div>
+
+<!-- 🏆 リッチデザイン ランキングモーダル (z-indexをセレブレーションより上に) -->
+<div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[10000] hidden" onclick="closeRankingModal()"></div>
+<div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-4 rounded-2xl z-[10001] w-11/12 max-w-3xl max-h-[95vh] hidden shadow-2xl flex flex-col">
+    
+    <div class="flex justify-between items-center mb-3">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight">🏆 殿堂入りランキング</h2>
+        <button onclick="closeRankingModal()" class="text-gray-400 hover:text-gray-800 font-bold text-xl">&times;</button>
+    </div>
+
+    <!-- ランキング切り替えタブ -->
+    <div class="flex flex-wrap gap-2 mb-4 justify-center" id="ranking-tabs">
+        <button id="tab-btn-pb" onclick="showRankingTab('pb')">自己ベスト</button>
+        <button id="tab-btn-pbDiff" onclick="showRankingTab('pbDiff')">成長幅</button>
+        <button id="tab-btn-injury" onclick="showRankingTab('injury')">怪我王</button>
+        <button id="tab-btn-money" onclick="showRankingTab('money')">総稼ぎ</button>
+        <button id="tab-btn-pbCount" onclick="showRankingTab('pbCount')">更新回数</button>
+        <button id="tab-btn-rta" onclick="showRankingTab('rta')">世界優勝RTA</button>
+    </div>
+
+    <!-- スクショ映えエリア -->
+    <div id="ranking-screenshot-area" class="relative flex-1 bg-white border-2 border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden min-h-[300px]">
+        <div id="ranking-category-header" class="text-center py-4 text-white font-extrabold text-xl md:text-2xl shadow-md z-20 relative tracking-wide">
+            カテゴリータイトル
+        </div>
+        <div id="ranking-content" class="p-0 overflow-y-auto bg-white flex-1 custom-scrollbar"></div>
+        <div class="bg-gray-800 text-center py-2 text-xs md:text-sm text-gray-300 font-bold tracking-[0.2em] shadow-inner z-20 relative">
+            400m Track & Field Pro Simulation
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <p class="text-xs text-gray-500 mb-2 font-bold">💡 上の枠内をスクショしてシェアしよう！</p>
+        <button onclick="closeRankingModal()" class="bg-gray-700 hover:bg-gray-800 text-white px-10 py-3 rounded-full font-bold shadow-lg transition-transform transform hover:scale-105 w-full md:w-auto">閉じる</button>
+    </div>
 </div>
 
 <div class="container">
@@ -417,15 +464,17 @@
     <div id="screen-result" class="screen bg-white p-6 rounded-lg shadow-xl">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 pb-2">🏁 4年間の最終結果</h2>
         
+        <!-- ▼ エンディング ランキング登録エリア ▼ -->
         <div id="ranking-registration-area" class="bg-yellow-50 border border-yellow-300 p-4 rounded mb-6 text-center shadow-sm hidden">
             <h3 class="font-bold text-yellow-800 mb-2">🏅 殿堂入りランキングに登録！</h3>
-            <p id="ranking-reg-desc" class="text-sm text-gray-600 mb-3">1周目限定部門と世界優勝RTAにあなたの記録を残せます。</p>
+            <p id="ranking-reg-desc" class="text-sm text-gray-600 mb-3"></p>
             <input type="text" id="ranking-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border p-2 rounded mr-2 w-48 text-center" value="ハルノスケ">
             <button id="ranking-reg-btn" onclick="registerToRanking()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow">登録する</button>
         </div>
         <div class="text-center mb-6">
             <button onclick="openRankingModal()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded shadow">🏆 ランキングを見る</button>
         </div>
+        <!-- ▲ エンディング ランキング登録エリア ▲ -->
 
         <div class="mb-4">
             <label class="font-bold mr-2">表示する選手:</label>
@@ -465,25 +514,54 @@
 </div>
 
 <script>
+    // ページロード時にFirebaseの初期化を試みる
     document.addEventListener("DOMContentLoaded", () => {
         if(window.initFirebaseAuth) window.initFirebaseAuth();
     });
 
     function triggerConfetti() {
-        for(let i=0; i<100; i++){
+        for(let i=0; i<150; i++){
             let div = document.createElement('div');
-            div.style.position = 'fixed';
-            div.style.top = '-20px';
+            div.className = 'confetti';
             div.style.left = Math.random() * 100 + 'vw';
-            div.style.width = (Math.random()*10+5) + 'px';
-            div.style.height = (Math.random()*6+4) + 'px';
             div.style.backgroundColor = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6'][Math.floor(Math.random()*5)];
-            div.style.zIndex = '99999';
-            div.style.animation = `fall ${Math.random()*2+2.5}s linear forwards`;
-            div.style.transform = `rotate(${Math.random()*360}deg)`;
+            div.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            div.style.animationDelay = (Math.random() * 2) + 's';
             document.body.appendChild(div);
-            setTimeout(()=>div.remove(), 4500);
+            setTimeout(()=>div.remove(), 6000);
         }
+    }
+
+    function showCelebration(time) {
+        triggerConfetti();
+        getEl('celeb-modal-overlay').style.display = 'block';
+        getEl('celeb-modal').style.display = 'block';
+        
+        let msg = `ハルノスケを世界最強まで育ててくれてありがとう！<br>現実のハルノスケも最後まで陸上頑張ります！<br>今度会った時に感想教えてね<br><br><span class="text-xs text-gray-500 font-bold">※その他の記録の登録は、4年目の最後にある「最終結果画面」から行えます！</span>`;
+        if (time >= 43.03) {
+            msg += `<br><br><span class="text-sm text-red-600 font-bold">※次は世界記録(43.03秒未満)の更新を目指してね！</span>`;
+        }
+        getEl('celeb-msg').innerHTML = msg;
+        
+        // RTAタイム表示
+        getEl('celeb-rta-time').innerText = window.clearTimeString || "不明";
+        
+        // 登録ボタンの初期化
+        let btn = getEl('celeb-reg-btn');
+        if(window.hasRegisteredRTA) {
+            btn.disabled = true;
+            btn.innerText = "登録済み";
+            btn.className = "bg-gray-500 text-white font-bold py-3 px-6 rounded shadow-md cursor-not-allowed w-full md:w-auto";
+        } else {
+            btn.disabled = false;
+            btn.innerText = "送信する";
+            btn.className = "bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded shadow-md transition-transform transform hover:scale-105 w-full md:w-auto";
+        }
+    }
+
+    function closeCelebModal() {
+        getEl('celeb-modal-overlay').style.display = 'none';
+        getEl('celeb-modal').style.display = 'none';
     }
 
     function showHelpModalCustom(title, descHtml) {
@@ -560,6 +638,7 @@
         }
     };
     
+    // 全体管理用ステータス変数
     let careLevel = 0;
     let spikeLevel = 0;
     let usedSpecialFood = false;
@@ -572,6 +651,7 @@
     let myUnivIdCounter = 11;
     let ngpData = null;
 
+    // RTA & 殿堂入りランキング用変数
     let playerInitialPB = 0;
     let totalEarnedMoney = 0;
     let injuryCount = 0;
@@ -581,6 +661,10 @@
     let isNGPFlag = false;
     let hasClearedThisRun = false;
     let hasRegisteredRanking = false;
+    window.hasRegisteredRTA = false;
+    
+    // 周回数カウンター
+    let loopCount = 1;
 
     class Agent {
         constructor(id, initialTime, isPlayer, univName, strat, name) {
@@ -650,6 +734,13 @@
         inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。自己管理も実力のうちだ。"],
         inj_3: ["一番伸びる時期に何やってるんだ。これじゃスポンサーもつかんぞ。","お前が抜けた穴を後輩が埋めるんだぞ。不甲斐ないと思え。","ピーキングの概念をまだ理解してないのか。休むのも練習だ。"],
         inj_4: ["最後の年だぞ？引退までリハビリルームで過ごすつもりか。","4年間の集大成が故障か。プロへの道は厳しいぞ。","悲劇のヒロインぶるな。自分が招いた結果だろ。早く治せ。"],
+        
+        // 怪我時の激レア追加コメント
+        win_inj: ["痛みを堪えての優勝か…お前、本当にバケモンだな！", "怪我しながら勝つなんて前代未聞だ。早く治療しろよ！"],
+        med_inj: ["怪我しながら表彰台に乗るとは。執念のメダルだな。", "満身創痍でよく食らいついた。まずはしっかり休め。"],
+        qualified_inj: ["怪我を押してよく枠を勝ち取ったな。本戦までに少しでも治せよ。","満身創痍で通過とは…プロの執念を見せてもらったぞ。"],
+        not_qualified_inj: ["怪我してるんだから無理するな。今は治すことが最優先だ。", "万全なら通ってたはずだ。焦らずに治せ。"],
+
         pb_first: ["大学初のベストか。賞金が入ったな。自己投資に回せ。","ようやくスタートラインだ。勘違いして浮かれるなよ。","初任給みたいなもんだ。無駄遣いせずにスパイクでも買え。"],
         pb_1_2: ["ベスト更新か。金稼いでスパイクでも買い替えろ。","まずはおめでとう。調子乗るなよ、まだまだ上がいるぞ。","少しはマシな走りになったな。この調子でタイムを削れ。"],
         pb_3: ["ようやく上級生らしいタイムが出たな。いい士気上げだ。","意地を見せたな。これをコンスタントに出せないと意味がないぞ。","この時期のPBは価値がある。プロを意識してさらに上を目指せ。"],
@@ -701,7 +792,15 @@
         qualified_3_4: ["上級生としての意地を見せたな。本戦でも頼むぞ。","当然の結果だ。お前がチームを引っ張らなきゃ誰がやるんだ。","お前の走りでチームに勢いをつけてこい。期待してるぞ。"],
         not_qualified_1_2: ["スタンドからの応援、悔しいか？来年はトラックに立て。","これがレベルの差だ。自分の現在地を知るいい機会になったな。","今はただ声を枯らせ。来年は実力で枠を奪い取れ。"],
         not_qualified_3: ["後輩に枠を奪われて恥ずかしくないのか？意地を見せろ。","もう『来年がある』なんて甘い言葉は通用しない時期だぞ。","チームを引っ張るべき3年が何やってるんだ。情けない。"],
-        not_qualified_4: ["最後の年でスタンドか。これが4年間のお前の実力だ。","出られないお前の分まで走る仲間のために声を出せ。","引退までサポートに徹しろ。それがお前の最後の仕事だ。"]
+        not_qualified_4: ["最後の年でスタンドか。これが4年間のお前の実力だ。","出られないお前の分まで走る仲間のために声を出せ。","引退までサポートに徹しろ。それがお前の最後の仕事だ。"],
+        over_国際大会: ["世界レベルで入賞とは恐れ入った。次はメダルを狙えるぞ！", "世界のトップ8に入るなんて信じられない。日本の誇りだ！"],
+        over_日本選手権: ["日本選手権での入賞、見事だ。実業団のスカウトも注目してるぞ。", "日本のトップレベルに名を連ねたな！"],
+        skip_日本選手権: ["日本選手権の標準も切れないとはな。夏に死ぬ気で走力上げろ。"],
+        skip_国際大会: ["世界への切符は甘くない。冬に地獄を見る覚悟はあるか？"],
+        rec_student_日本選手権: ["日本選手権の大舞台で学生新記録！これは歴史に残るレースだ。"],
+        rec_japan_日本選手権: ["日本選手権での日本新記録！文句なしの日本最速だ！"],
+        rec_japan_国際大会: ["世界大会での日本新！この記録は日本の陸上史に永遠に刻まれるぞ！"],
+        rec_world_国際大会: ["世界大会で世界新記録…！？お前は神か！！"]
     };
 
     const getRandomComment = (category) => {
@@ -721,11 +820,22 @@
         let grade = p ? p.grade : 1;
         let isWinter = phase === 'winter' || phase === 'new-year';
         let gradeGrp = grade <= 2 ? '1_2' : '3_4';
+        let isInjured = p ? p.isInjured : false;
         
         let category = 'effort_normal_summer';
 
         if (ev === 'first_look') category = 'first_look';
-        else if (ev === 'inj') category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
+        else if (ev === 'win') category = isInjured ? 'win_inj' : 'win';
+        else if (ev === 'med') category = isInjured ? 'med_inj' : 'med';
+        else if (ev.startsWith('rec_')) {
+            if ((tName === '日本選手権' || tName === '国際大会') && coachComments[`${ev}_${tName}`]) {
+                category = `${ev}_${tName}`;
+            } else {
+                category = ev;
+            }
+        } else if (ev === 'inj' || (isInjured && ['over', 'under', 'pb', 'normal_effort'].includes(ev))) {
+            category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
+        } else if (ev === 'skip') category = `skip_${tName}` in coachComments ? `skip_${tName}` : 'not_qualified_1_2';
         else if (ev === 'pb') {
             let pbCount = p.logs.filter(l => l.pb).length;
             let recentPbs = p.logs.slice(-3).filter(l => l.pb).length;
@@ -734,16 +844,12 @@
             else if (grade <= 2) category = 'pb_1_2';
             else if (grade === 3) category = 'pb_3';
             else category = 'pb_4';
+        } else if (ev === 'over') {
+            category = coachComments[`over_${tName}`] ? `over_${tName}` : 'over';
         } else if (ev === 'under') category = `under_${gradeGrp}`;
-        else if (ev === 'over') category = 'over';
-        else if (ev === 'win') category = 'win';
-        else if (ev === 'med') category = 'med';
         else if (ev === 'relay') category = `relay_${gradeGrp}`;
-        else if (ev === 'rec_world') category = 'rec_world';
-        else if (ev === 'rec_japan') category = 'rec_japan';
-        else if (ev === 'rec_student') category = 'rec_student';
-        else if (ev === 'not_qualified') category = grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4';
-        else if (ev === 'qualified') category = `qualified_${gradeGrp}`;
+        else if (ev === 'not_qualified') category = isInjured ? 'not_qualified_inj' : (grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4');
+        else if (ev === 'qualified') category = isInjured ? 'qualified_inj' : `qualified_${gradeGrp}`;
         else {
             let suffix = isWinter ? '_winter' : '_summer';
             if (e >= 8.0) category = 'effort_high' + suffix;
@@ -751,9 +857,10 @@
             else category = 'effort_normal' + suffix;
         }
 
-        if (tName && (ev === 'win' || ev === 'med' || ev === 'over' || ev === 'under' || ev === 'qualified' || ev === 'not_qualified')) {
-            let specKey1 = `${ev}_${tName}_${gradeGrp}`;
-            let specKey2 = `${ev}_${tName}`;
+        if (tName && !isInjured && ['win', 'med', 'over', 'under', 'qualified', 'not_qualified'].includes(category.split('_')[0])) {
+            let baseEv = category.split('_')[0];
+            let specKey1 = `${baseEv}_${tName}_${gradeGrp}`;
+            let specKey2 = `${baseEv}_${tName}`;
             if (coachComments[specKey1]) category = specKey1;
             else if (coachComments[specKey2]) category = specKey2;
         }
@@ -951,7 +1058,7 @@
         document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
         document.querySelectorAll('.action-panel').forEach(e => e.style.display = 'none');
         getEl('screen-main').classList.add('active'); 
-        getEl('season-title').innerText = `${year}年目 - ${pData[0]}`;
+        getEl('season-title').innerText = `人生${loopCount}周目 ${year}年目 - ${pData[0]}`;
         
         let pnl = getEl(`panel-${pData[1]}`);
         if(pnl) pnl.style.display = 'block';
@@ -1026,11 +1133,14 @@
             window.gameClearRTA = 0;
             window.clearTimeString = '';
             hasRegisteredRanking = false;
+            window.hasRegisteredRTA = false; // RTA個別フラグ
 
             if (isNGP) {
+                loopCount++;
                 document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
                 getEl('screen-main').classList.add('active');
             } else {
+                loopCount = 1;
                 ngpData = null;
                 window.playerInitialPB = 0;
                 window.injuryCount = 0;
@@ -1115,7 +1225,7 @@
             getEl('log-area').innerHTML = `<div class="mb-2 border-b border-gray-300 pb-2"><strong>1年目開始。</strong></div>`;
             setPhase('spring-sel');
             
-            if (isNGP) log("✨ 【強くてニューゲーム】 資金とアイテムを引き継いで1年目から再スタートしました！");
+            if (isNGP) log(`✨ 【強くてニューゲーム】 資金とアイテムを引き継いで 人生${loopCount}周目 を開始しました！`);
             
             upCoach(isNGP ? 'normal_effort' : 'first_look');
         } catch(e) {
@@ -1270,41 +1380,25 @@
         
         if (isSelection) {
             if (curQuals.includes(p)) {
-                upCoach(p.isInjured ? "inj" : "qualified", 5, tName.replace('選考',''));
+                upCoach("qualified", 5, tName.replace('選考',''));
             } else {
                 upCoach("not_qualified", 5, tName.replace('選考',''));
             }
         } else {
             if (isPlayerIn) {
-                upCoach(p.isInjured ? "inj" : cEv, 5, tName);
+                upCoach(cEv, 5, tName);
             } else {
                 upCoach("not_qualified", 5, tName);
             }
         }
 
+        // RTA & 優勝セレブレーション判定
         if (!isSelection && tName === '国際大会' && pData.some(d => d.a.isPlayer && d.a.logs[d.a.logs.length-1].r === 1)) {
             if (!hasClearedThisRun) {
                 hasClearedThisRun = true;
                 window.gameClearRTA = phaseCount;
-                window.clearTimeString = `${year}年目 秋`;
-                
-                triggerConfetti();
-                setTimeout(() => {
-                    let pb = agents[pId].pb;
-                    let desc = "国際大会での優勝おめでとうございます！これでこのシミュレーションの<b>全クリア</b>となります！<br><br>";
-                    
-                    if (pb >= 43.03) {
-                        desc += "これからは真の限界である<strong class='text-red-600 text-lg'>世界記録(43.03秒未満)</strong>の更新を目指して、残りの競技生活を走り抜いてください！<br><br>";
-                    }
-                    
-                    desc += `<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-gray-700 text-left">
-                        <b>👤 開発者 ハルノスケより：</b><br>
-                        ハルノスケを世界最強まで育ててくれてありがとう！<br>
-                        現実のハルノスケも最後まで陸上頑張ります！<br>
-                        今度会った時に感想教えてね
-                    </div>`;
-                    showHelpModalCustom("🎉 世界一達成！", desc);
-                }, 1000);
+                window.clearTimeString = `人生${loopCount}周目 ${year}年目 秋 (計${window.gameClearRTA}ターン)`;
+                setTimeout(() => { showCelebration(p.pb); }, 1000);
             }
         }
 
@@ -1362,15 +1456,16 @@
             d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - careEff));
         });
 
-        if (pData.length > 8) {
+        let maxEntrants = tName.includes('インカレ') ? 16 : 8;
+        if (pData.length > maxEntrants) {
             pData.sort((a,b) => a.res.time - b.res.time);
             let meIdx = pData.findIndex(d => d.a.isPlayer);
-            let final8 = pData.slice(0, 8);
-            if (meIdx >= 8 && curQuals.includes(p)) {
-                final8.pop();
-                final8.push(pData[meIdx]);
+            let finalLst = pData.slice(0, maxEntrants);
+            if (meIdx >= maxEntrants && curQuals.includes(p)) {
+                finalLst.pop();
+                finalLst.push(pData[meIdx]);
             }
-            pData = final8;
+            pData = finalLst;
         }
         
         pData.sort(() => Math.random() - 0.5);
@@ -1395,6 +1490,7 @@
         });
         
         log(`📝 ${tName} は標準記録未達のためスキップしました。`);
+        upCoach('skip', 5, tName);
         setPhase(nextPhase);
     }
 
@@ -1613,7 +1709,7 @@
                 incoming.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (初期PB: ${a.pb.toFixed(2)}秒)</span><br>`; });
                 nyHtml += `</div>`;
             } else {
-                nyHtml += `<div class="mt-4 text-center font-bold text-lg text-gray-800">4年間の競技生活が終了しました！</div>`;
+                nyHtml += `<div class="mt-4 text-center font-bold text-lg text-gray-800">競技生活の区切りを迎えました！</div>`;
             }
             
             let nyEl = getEl('new-year-content');
@@ -1634,7 +1730,7 @@
         if (year > 4) {
             showEnd();
         } else {
-            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>${year}年目開始。</strong></div>`);
+            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>人生${loopCount}周目 ${year}年目開始。</strong></div>`);
             setPhase('spring-sel');
         }
     }
@@ -1665,6 +1761,7 @@
         if(getEl('agent-modal')) getEl('agent-modal').style.display = 'none';
     }
 
+    // --- ランキング連携機能群 ---
     function openRankingModal() {
         getEl('ranking-modal-overlay').style.display = 'block';
         getEl('ranking-modal').style.display = 'block';
@@ -1674,6 +1771,47 @@
     function closeRankingModal() {
         getEl('ranking-modal-overlay').style.display = 'none';
         getEl('ranking-modal').style.display = 'none';
+    }
+
+    // 世界優勝した瞬間にRTAのみを即時登録する関数
+    async function registerRTAFromCeleb() {
+        if(window.hasRegisteredRTA) return;
+        
+        let name = getEl('celeb-player-name').value.trim() || '名無し';
+        let pData = { name: name, date: new Date().toLocaleDateString() };
+        
+        let btn = getEl('celeb-reg-btn');
+        btn.disabled = true;
+        btn.innerText = "送信中...";
+
+        // ターン数を val に、文字列表現を text に入れる
+        let e = {tab: 'rta', data: {...pData, val: window.gameClearRTA, text: window.clearTimeString}};
+        
+        let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
+        if(!r.rta) r.rta = [];
+        r.rta.push(e.data);
+        r.rta.sort((a,b) => a.val - b.val);
+
+        let onlineSuccess = false;
+        if (window.saveRankingOnline) {
+            try {
+                onlineSuccess = await window.saveRankingOnline(e.tab, e.data);
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        localStorage.setItem('tfs_rankings', JSON.stringify(r));
+        window.hasRegisteredRTA = true;
+
+        btn.innerText = "登録完了";
+        btn.className = "bg-gray-500 text-white font-bold py-3 px-6 rounded shadow-md cursor-not-allowed w-full md:w-auto";
+
+        if(onlineSuccess) {
+            showToast("👑 RTAランキングに登録しました！", "success");
+        } else {
+            showToast("ローカルに保存しました", "info");
+        }
     }
 
     async function registerToRanking() {
@@ -1688,46 +1826,63 @@
             entries.push({tab: 'injury', data: {...pData, val: window.injuryCount}});
             entries.push({tab: 'money', data: {...pData, val: window.totalEarnedMoney}});
             
-            let indT = p.logs.filter(l=>l.n.includes('インカレ') && !l.inj && l.t<60 && !l.n.includes('選考')).map(l=>l.t);
-            let relT = p.logs.filter(l=>l.n.includes(' R') && !l.inj && l.t<60).map(l=>l.t);
-            let diff = (indT.length && relT.length) ? Math.min(...indT) - Math.min(...relT) : -999;
-            entries.push({tab: 'relay', data: {...pData, val: diff}});
+            let pbUpdateCount = p.logs.filter(l => l.pb).length;
+            entries.push({tab: 'pbCount', data: {...pData, val: pbUpdateCount}});
         }
-        if (hasClearedThisRun && gameClearRTA > 0) {
-            entries.push({tab: 'rta', data: {...pData, val: gameClearRTA, text: clearTimeString}});
+        
+        if (hasClearedThisRun && window.gameClearRTA > 0 && !window.hasRegisteredRTA) {
+            entries.push({tab: 'rta', data: {...pData, val: window.gameClearRTA, text: window.clearTimeString}});
+            window.hasRegisteredRTA = true; 
         }
 
-        let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], relay: [], rta: [] };
+        if (entries.length === 0) {
+            showToast("登録できる記録がありません", "fail");
+            return;
+        }
+
+        let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
         
-        getEl('ranking-reg-desc').innerHTML = "<span class='text-blue-600 font-bold'>クラウドサーバーに送信中...</span>";
         let btn = getEl('ranking-reg-btn');
-        if(btn) btn.disabled = true;
+        if(btn) {
+            btn.disabled = true;
+            btn.innerText = "送信中...";
+        }
 
         let onlineSuccess = false;
-        for (let e of entries) {
-            r[e.tab].push(e.data);
-            if (e.tab === 'pbDiff' || e.tab === 'injury' || e.tab === 'money' || e.tab === 'relay') {
-                r[e.tab].sort((a,b) => b.val - a.val);
-            } else {
-                r[e.tab].sort((a,b) => a.val - b.val);
+        try {
+            for (let e of entries) {
+                if(!r[e.tab]) r[e.tab] = [];
+                r[e.tab].push(e.data);
+                if (e.tab === 'pbDiff' || e.tab === 'injury' || e.tab === 'money' || e.tab === 'pbCount') {
+                    r[e.tab].sort((a,b) => b.val - a.val);
+                } else {
+                    r[e.tab].sort((a,b) => a.val - b.val);
+                }
+                
+                if (window.saveRankingOnline) {
+                    let success = await window.saveRankingOnline(e.tab, e.data);
+                    if(success) onlineSuccess = true;
+                }
             }
-            
-            if (window.saveRankingOnline) {
-                let success = await window.saveRankingOnline(e.tab, e.data);
-                if(success) onlineSuccess = true;
-            }
+        } catch (e) {
+            console.error("保存処理中にエラーが発生しました", e);
         }
         
         localStorage.setItem('tfs_rankings', JSON.stringify(r));
         hasRegisteredRanking = true;
         
+        if(btn) {
+            btn.innerText = "登録完了";
+            btn.classList.add('bg-gray-500');
+            btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+        }
+
         if(onlineSuccess) {
             showToast("オンラインランキングに登録しました！", "success");
         } else {
             showToast("ローカルランキングに登録しました", "info");
         }
         
-        getEl('ranking-registration-area').style.display = 'none';
         openRankingModal();
     }
 
@@ -1736,13 +1891,33 @@
         if (tab === 'pbDiff') return '+' + val.toFixed(2) + '秒';
         if (tab === 'injury') return val + '回';
         if (tab === 'money') return val.toLocaleString() + '円';
-        if (tab === 'relay') return val === -999 ? '記録なし' : (val > 0 ? '+' : '') + val.toFixed(2) + '秒';
-        if (tab === 'rta') return text;
+        if (tab === 'pbCount') return val + '回';
+        // textがundefinedならval(ターン数)をフォールバックとして表示
+        if (tab === 'rta') return text || (val + " ターン");
         return val;
     }
 
+    // 🏆 リッチランキング用 テーマ設定
+    const rankThemes = {
+        pb: { title: "⏱️ 自己ベスト ランキング", bg: "bg-blue-600", text: "text-blue-600", btn: "bg-blue-100 text-blue-800", active: "bg-blue-600 text-white shadow-md transform scale-105" },
+        pbDiff: { title: "📈 成長幅(PB更新) ランキング", bg: "bg-green-600", text: "text-green-600", btn: "bg-green-100 text-green-800", active: "bg-green-600 text-white shadow-md transform scale-105" },
+        injury: { title: "🏥 怪我王 ランキング", bg: "bg-red-600", text: "text-red-600", btn: "bg-red-100 text-red-800", active: "bg-red-600 text-white shadow-md transform scale-105" },
+        money: { title: "💰 総獲得金額 ランキング", bg: "bg-yellow-500", text: "text-yellow-600", btn: "bg-yellow-100 text-yellow-800", active: "bg-yellow-500 text-white shadow-md transform scale-105" },
+        pbCount: { title: "🔥 PB更新回数 ランキング", bg: "bg-orange-500", text: "text-orange-600", btn: "bg-orange-100 text-orange-800", active: "bg-orange-500 text-white shadow-md transform scale-105" },
+        rta: { title: "👑 世界優勝RTA ランキング", bg: "bg-purple-600", text: "text-purple-600", btn: "bg-purple-100 text-purple-800", active: "bg-purple-600 text-white shadow-md transform scale-105" }
+    };
+
     async function showRankingTab(tab) {
-        getEl('ranking-content').innerHTML = '<p class="text-center py-8 text-gray-500 font-bold animate-pulse">ランキングデータ取得中...</p>';
+        Object.keys(rankThemes).forEach(k => {
+            let btn = getEl('tab-btn-' + k);
+            if(btn) btn.className = `px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${k===tab ? rankThemes[k].active : rankThemes[k].btn}`;
+        });
+
+        let header = getEl('ranking-category-header');
+        header.className = `text-center py-4 text-white font-extrabold text-xl md:text-2xl shadow-md z-20 relative tracking-wide ${rankThemes[tab].bg}`;
+        header.innerText = rankThemes[tab].title;
+
+        getEl('ranking-content').innerHTML = '<div class="py-20 text-center"><p class="text-gray-500 font-bold animate-pulse text-lg">📡 ランキングデータ取得中...</p></div>';
         
         let arr = [];
         if (window.getRankingOnline) {
@@ -1753,24 +1928,33 @@
         }
         
         if (arr.length === 0) {
-            let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], relay: [], rta: [] };
+            let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
             arr = r[tab] || [];
         }
 
-        if (tab === 'pbDiff' || tab === 'injury' || tab === 'money' || tab === 'relay') {
+        if (tab === 'pbDiff' || tab === 'injury' || tab === 'money' || tab === 'pbCount') {
             arr.sort((a,b) => b.val - a.val);
         } else {
-            arr.sort((a,b) => a.val - b.val);
+            arr.sort((a,b) => a.val - b.val); // タイムやRTA(ターン数)は少ない方が上位
         }
         
-        let html = '<table class="w-full text-sm"><thead><tr><th class="py-2 w-12">順位</th><th class="py-2">名前</th><th class="py-2">記録</th><th class="py-2 w-24">日付</th></tr></thead><tbody>';
+        let html = '<table class="w-full text-sm border-collapse"><thead class="bg-gray-100 text-gray-700 sticky top-0 z-10 shadow-sm"><tr><th class="py-3 w-16 border-b">順位</th><th class="py-3 border-b">名前</th><th class="py-3 border-b">記録</th><th class="py-3 w-28 border-b">日付</th></tr></thead><tbody>';
         
         if (arr.length === 0) {
-            html += '<tr><td colspan="4" class="py-4 text-center text-gray-500">まだ記録がありません</td></tr>';
+            html += '<tr><td colspan="4" class="py-12 text-center text-gray-500 font-bold">まだ記録がありません</td></tr>';
         } else {
+            let t = rankThemes[tab];
             arr.slice(0, 50).forEach((d, i) => {
                 let rankStr = i === 0 ? '🥇 1' : i === 1 ? '🥈 2' : i === 2 ? '🥉 3' : i + 1;
-                html += `<tr><td>${rankStr}</td><td>${d.name}</td><td class="font-bold text-blue-700">${formatRankVal(tab, d.val, d.text)}</td><td class="text-xs text-gray-500">${d.date}</td></tr>`;
+                let rowCls = i === 0 ? 'bg-yellow-50 font-bold text-base' : i === 1 ? 'bg-gray-50 font-bold' : i === 2 ? 'bg-orange-50 font-bold' : '';
+                let borderCls = 'border-b border-gray-200';
+                
+                html += `<tr class="${rowCls} hover:bg-blue-50 transition-colors">
+                    <td class="py-3 text-center ${borderCls}">${rankStr}</td>
+                    <td class="py-3 text-center font-bold text-gray-800 ${borderCls}">${d.name}</td>
+                    <td class="py-3 text-center font-extrabold ${t.text} text-base ${borderCls}">${formatRankVal(tab, d.val, d.text)}</td>
+                    <td class="py-3 text-center text-xs text-gray-500 ${borderCls}">${d.date}</td>
+                </tr>`;
             });
         }
         html += '</tbody></table>';
@@ -1784,11 +1968,15 @@
         getEl('result-agent-select').innerHTML = t.map(a => `<option value="${a.id}" ${a.isPlayer?'selected':''}>${a.name}${a.isActive?'':'(引退)'} (${a.pb.toFixed(2)}秒 / ${(a.money||0).toLocaleString()}円)</option>`).join('');
         drawResult();
 
-        if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && gameClearRTA > 0))) {
-            getEl('ranking-registration-area').style.display = 'block';
+        // 登録エリアの表示ロジック
+        if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && window.gameClearRTA > 0 && !window.hasRegisteredRTA))) {
+            let regArea = getEl('ranking-registration-area');
+            regArea.classList.remove('hidden'); 
+            regArea.style.display = 'block';
+            
             let desc = '';
             if (!isNGPFlag) desc += '🌟 1周目限定の全5部門にエントリー可能！<br>';
-            if (hasClearedThisRun) desc += `⏱️ 世界優勝RTA（${clearTimeString}）の記録が保存されます！`;
+            if (hasClearedThisRun && !window.hasRegisteredRTA) desc += `⏱️ 世界優勝RTA（${window.clearTimeString}）の記録が保存されます！`;
             getEl('ranking-reg-desc').innerHTML = desc;
         } else {
             getEl('ranking-registration-area').style.display = 'none';
@@ -1798,7 +1986,7 @@
     function drawResult() {
         let a = agents.find(ag=>ag.id===parseInt(getEl('result-agent-select').value));
         if(!a) return;
-        getEl('result-chart-title').innerText = `📈 4年間の軌跡 (${a.name})`;
+        getEl('result-chart-title').innerText = `📈 人生${loopCount}周目の軌跡 (${a.name})`;
         getEl('race-records-body').innerHTML = a.logs.length ? a.logs.map(l => `<tr><td class="py-1">${l.n}</td><td class="py-1">${l.r}</td><td class="py-1">${l.inj?"<span class='injury'>DNS</span>":l.t>60?fmt(l.t):l.t.toFixed(2)+"秒"} ${l.pb?"<b style='color:#f39c12'>★PB</b>":""}</td></tr>`).join('') : "<tr><td colspan='3' class='py-2'>記録なし</td></tr>";
         
         if(charts.res) charts.res.destroy(); if(charts.rac) charts.rac.destroy();
