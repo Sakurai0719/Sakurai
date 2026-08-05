@@ -77,10 +77,11 @@
 
     <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
+        // ご提示いただいた設定
         const firebaseConfig = {
             apiKey: "AIzaSyCcm0VxhPW-G4VDiMiXQQtjHAY1Vl25Zwc",
             authDomain: "ikuseiharunosuke.firebaseapp.com",
@@ -162,7 +163,30 @@
     <div class="text-center"><button onclick="closeAgentModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold">閉じる</button></div>
 </div>
 
-<!-- 🏆 リッチデザインランキングモーダル -->
+<!-- 👑 世界優勝セレブレーション モーダル -->
+<div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[9998] hidden"></div>
+<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400">
+    <h2 class="text-4xl font-extrabold text-yellow-500 mb-4">👑 WORLD CHAMPION!</h2>
+    <p class="text-lg text-gray-700 font-bold mb-6">ついに世界大会での優勝を果たしました！</p>
+    
+    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6 text-left">
+        <p class="font-bold text-gray-800 mb-2">👨‍💻 開発者 ハルノスケより</p>
+        <p id="celeb-msg" class="text-sm text-gray-700 leading-relaxed"></p>
+    </div>
+
+    <!-- ▼▼ RTA即時登録エリア ▼▼ -->
+    <div id="celeb-rta-area" class="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg mb-6 shadow-inner">
+        <h3 class="font-bold text-purple-800 mb-2 text-lg">👑 世界優勝RTA 記録登録</h3>
+        <p class="text-sm text-gray-700 mb-3">クリアタイム： <span id="celeb-rta-time" class="font-extrabold text-purple-700 text-xl"></span></p>
+        <input type="text" id="celeb-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border-2 border-purple-200 p-3 rounded w-full md:w-48 text-center font-bold mb-2 md:mb-0 md:mr-2" value="ハルノスケ">
+        <button id="celeb-reg-btn" onclick="registerRTAFromCeleb()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded shadow-md transition-transform transform hover:scale-105 w-full md:w-auto">送信する</button>
+    </div>
+    <!-- ▲▲ RTA即時登録エリア ▲▲ -->
+
+    <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg w-full">次へ進む</button>
+</div>
+
+<!-- 🏆 リッチデザイン ランキングモーダル -->
 <div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[9998] hidden" onclick="closeRankingModal()"></div>
 <div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-4 rounded-2xl z-[9999] w-11/12 max-w-3xl max-h-[95vh] hidden shadow-2xl flex flex-col">
     
@@ -181,17 +205,12 @@
         <button id="tab-btn-rta" onclick="showRankingTab('rta')">世界優勝RTA</button>
     </div>
 
-    <!-- スクショ映えエリア (境界線・角丸・影付き) -->
+    <!-- スクショ映えエリア -->
     <div id="ranking-screenshot-area" class="relative flex-1 bg-white border-2 border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden min-h-[300px]">
-        <!-- 動的カテゴリーヘッダー -->
         <div id="ranking-category-header" class="text-center py-4 text-white font-extrabold text-xl md:text-2xl shadow-md z-20 relative tracking-wide">
             カテゴリータイトル
         </div>
-        
-        <!-- ランキングリスト -->
         <div id="ranking-content" class="p-0 overflow-y-auto bg-white flex-1 custom-scrollbar"></div>
-        
-        <!-- ウォーターマーク (ゲームタイトル) -->
         <div class="bg-gray-800 text-center py-2 text-xs md:text-sm text-gray-300 font-bold tracking-[0.2em] shadow-inner z-20 relative">
             400m Track & Field Pro Simulation
         </div>
@@ -199,19 +218,8 @@
 
     <div class="text-center mt-4">
         <p class="text-xs text-gray-500 mb-2 font-bold">💡 上の枠内をスクショしてシェアしよう！</p>
-        <button onclick="closeRankingModal()" class="bg-gray-700 hover:bg-gray-800 text-white px-10 py-3 rounded-full font-bold shadow-lg transition-transform transform hover:scale-105">閉じる</button>
+        <button onclick="closeRankingModal()" class="bg-gray-700 hover:bg-gray-800 text-white px-10 py-3 rounded-full font-bold shadow-lg transition-transform transform hover:scale-105 w-full md:w-auto">閉じる</button>
     </div>
-</div>
-
-<div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[9998] hidden"></div>
-<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400">
-    <h2 class="text-4xl font-extrabold text-yellow-500 mb-4">👑 WORLD CHAMPION!</h2>
-    <p class="text-lg text-gray-700 font-bold mb-6">ついに世界大会での優勝を果たしました！</p>
-    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6 text-left">
-        <p class="font-bold text-gray-800 mb-2">👨‍💻 開発者 ハルノスケより</p>
-        <p id="celeb-msg" class="text-sm text-gray-700 leading-relaxed"></p>
-    </div>
-    <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">次へ進む</button>
 </div>
 
 <div class="container">
@@ -453,17 +461,17 @@
     <div id="screen-result" class="screen bg-white p-6 rounded-lg shadow-xl">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 pb-2">🏁 4年間の最終結果</h2>
         
-        <!-- ▼ ランキング登録エリア ▼ -->
+        <!-- ▼ エンディング ランキング登録エリア ▼ -->
         <div id="ranking-registration-area" class="bg-yellow-50 border border-yellow-300 p-4 rounded mb-6 text-center shadow-sm hidden">
             <h3 class="font-bold text-yellow-800 mb-2">🏅 殿堂入りランキングに登録！</h3>
-            <p id="ranking-reg-desc" class="text-sm text-gray-600 mb-3">1周目限定部門と世界優勝RTAにあなたの記録を残せます。</p>
+            <p id="ranking-reg-desc" class="text-sm text-gray-600 mb-3"></p>
             <input type="text" id="ranking-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border p-2 rounded mr-2 w-48 text-center" value="ハルノスケ">
             <button id="ranking-reg-btn" onclick="registerToRanking()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow">登録する</button>
         </div>
         <div class="text-center mb-6">
             <button onclick="openRankingModal()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded shadow">🏆 ランキングを見る</button>
         </div>
-        <!-- ▲ ランキング登録エリア ▲ -->
+        <!-- ▲ エンディング ランキング登録エリア ▲ -->
 
         <div class="mb-4">
             <label class="font-bold mr-2">表示する選手:</label>
@@ -509,20 +517,48 @@
     });
 
     function triggerConfetti() {
-        for(let i=0; i<100; i++){
+        for(let i=0; i<150; i++){
             let div = document.createElement('div');
-            div.style.position = 'fixed';
-            div.style.top = '-20px';
+            div.className = 'confetti';
             div.style.left = Math.random() * 100 + 'vw';
-            div.style.width = (Math.random()*10+5) + 'px';
-            div.style.height = (Math.random()*6+4) + 'px';
             div.style.backgroundColor = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6'][Math.floor(Math.random()*5)];
-            div.style.zIndex = '99999';
-            div.style.animation = `fall ${Math.random()*2+2.5}s linear forwards`;
-            div.style.transform = `rotate(${Math.random()*360}deg)`;
+            div.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            div.style.animationDelay = (Math.random() * 2) + 's';
             document.body.appendChild(div);
-            setTimeout(()=>div.remove(), 4500);
+            setTimeout(()=>div.remove(), 6000);
         }
+    }
+
+    function showCelebration(time) {
+        triggerConfetti();
+        getEl('celeb-modal-overlay').style.display = 'block';
+        getEl('celeb-modal').style.display = 'block';
+        
+        let msg = `ハルノスケを世界最強まで育ててくれてありがとう！<br>現実のハルノスケも最後まで陸上頑張ります！<br>今度会った時に感想教えてね<br><br><span class="text-xs text-gray-500 font-bold">※その他の記録の登録は、4年目の最後にある「最終結果画面」から行えます！</span>`;
+        if (time >= 43.03) {
+            msg += `<br><br><span class="text-sm text-red-600 font-bold">※次は世界記録(43.03秒未満)の更新を目指してね！</span>`;
+        }
+        getEl('celeb-msg').innerHTML = msg;
+        
+        // RTAタイム表示
+        getEl('celeb-rta-time').innerText = window.clearTimeString || "不明";
+        
+        // 登録ボタンの初期化
+        let btn = getEl('celeb-reg-btn');
+        if(window.hasRegisteredRTA) {
+            btn.disabled = true;
+            btn.innerText = "登録済み";
+            btn.className = "bg-gray-500 text-white font-bold py-3 px-6 rounded shadow-md cursor-not-allowed w-full md:w-auto";
+        } else {
+            btn.disabled = false;
+            btn.innerText = "送信する";
+            btn.className = "bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded shadow-md transition-transform transform hover:scale-105 w-full md:w-auto";
+        }
+    }
+
+    function closeCelebModal() {
+        getEl('celeb-modal-overlay').style.display = 'none';
+        getEl('celeb-modal').style.display = 'none';
     }
 
     function showHelpModalCustom(title, descHtml) {
@@ -622,6 +658,7 @@
     let isNGPFlag = false;
     let hasClearedThisRun = false;
     let hasRegisteredRanking = false;
+    window.hasRegisteredRTA = false;
 
     class Agent {
         constructor(id, initialTime, isPlayer, univName, strat, name) {
@@ -691,6 +728,13 @@
         inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。自己管理も実力のうちだ。"],
         inj_3: ["一番伸びる時期に何やってるんだ。これじゃスポンサーもつかんぞ。","お前が抜けた穴を後輩が埋めるんだぞ。不甲斐ないと思え。","ピーキングの概念をまだ理解してないのか。休むのも練習だ。"],
         inj_4: ["最後の年だぞ？引退までリハビリルームで過ごすつもりか。","4年間の集大成が故障か。プロへの道は厳しいぞ。","悲劇のヒロインぶるな。自分が招いた結果だろ。早く治せ。"],
+        
+        // 怪我時の激レア追加コメント
+        win_inj: ["痛みを堪えての優勝か…お前、本当にバケモンだな！", "怪我しながら勝つなんて前代未聞だ。早く治療しろよ！"],
+        med_inj: ["怪我しながら表彰台に乗るとは。執念のメダルだな。", "満身創痍でよく食らいついた。まずはしっかり休め。"],
+        qualified_inj: ["怪我を押してよく枠を勝ち取ったな。本戦までに少しでも治せよ。","満身創痍で通過とは…プロの執念を見せてもらったぞ。"],
+        not_qualified_inj: ["怪我してるんだから無理するな。今は治すことが最優先だ。", "万全なら通ってたはずだ。焦らずに治せ。"],
+
         pb_first: ["大学初のベストか。賞金が入ったな。自己投資に回せ。","ようやくスタートラインだ。勘違いして浮かれるなよ。","初任給みたいなもんだ。無駄遣いせずにスパイクでも買え。"],
         pb_1_2: ["ベスト更新か。金稼いでスパイクでも買い替えろ。","まずはおめでとう。調子乗るなよ、まだまだ上がいるぞ。","少しはマシな走りになったな。この調子でタイムを削れ。"],
         pb_3: ["ようやく上級生らしいタイムが出たな。いい士気上げだ。","意地を見せたな。これをコンスタントに出せないと意味がないぞ。","この時期のPBは価値がある。プロを意識してさらに上を目指せ。"],
@@ -762,10 +806,19 @@
         let grade = p ? p.grade : 1;
         let isWinter = phase === 'winter' || phase === 'new-year';
         let gradeGrp = grade <= 2 ? '1_2' : '3_4';
+        let isInjured = p ? p.isInjured : false;
         
         let category = 'effort_normal_summer';
 
+        // 優先度をつけてカテゴリを判定する
         if (ev === 'first_look') category = 'first_look';
+        else if (ev === 'rec_world') category = 'rec_world';
+        else if (ev === 'rec_japan') category = 'rec_japan';
+        else if (ev === 'rec_student') category = 'rec_student';
+        else if (ev === 'win') category = isInjured ? 'win_inj' : 'win';
+        else if (ev === 'med') category = isInjured ? 'med_inj' : 'med';
+        else if (ev === 'qualified') category = isInjured ? 'qualified_inj' : `qualified_${gradeGrp}`;
+        else if (ev === 'not_qualified') category = isInjured ? 'not_qualified_inj' : (grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4');
         else if (ev === 'inj') category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
         else if (ev === 'pb') {
             let pbCount = p.logs.filter(l => l.pb).length;
@@ -775,16 +828,10 @@
             else if (grade <= 2) category = 'pb_1_2';
             else if (grade === 3) category = 'pb_3';
             else category = 'pb_4';
-        } else if (ev === 'under') category = `under_${gradeGrp}`;
+        } 
+        else if (ev === 'under') category = `under_${gradeGrp}`;
         else if (ev === 'over') category = 'over';
-        else if (ev === 'win') category = 'win';
-        else if (ev === 'med') category = 'med';
         else if (ev === 'relay') category = `relay_${gradeGrp}`;
-        else if (ev === 'rec_world') category = 'rec_world';
-        else if (ev === 'rec_japan') category = 'rec_japan';
-        else if (ev === 'rec_student') category = 'rec_student';
-        else if (ev === 'not_qualified') category = grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4';
-        else if (ev === 'qualified') category = `qualified_${gradeGrp}`;
         else {
             let suffix = isWinter ? '_winter' : '_summer';
             if (e >= 8.0) category = 'effort_high' + suffix;
@@ -792,7 +839,8 @@
             else category = 'effort_normal' + suffix;
         }
 
-        if (tName && (ev === 'win' || ev === 'med' || ev === 'over' || ev === 'under' || ev === 'qualified' || ev === 'not_qualified')) {
+        // 大会別・学年別コメントの上書き (怪我していない場合のみ大会専用コメントを優先)
+        if (tName && !isInjured && (ev === 'win' || ev === 'med' || ev === 'over' || ev === 'under' || ev === 'qualified' || ev === 'not_qualified')) {
             let specKey1 = `${ev}_${tName}_${gradeGrp}`;
             let specKey2 = `${ev}_${tName}`;
             if (coachComments[specKey1]) category = specKey1;
@@ -1067,6 +1115,7 @@
             window.gameClearRTA = 0;
             window.clearTimeString = '';
             hasRegisteredRanking = false;
+            window.hasRegisteredRTA = false; // RTA個別フラグ
 
             if (isNGP) {
                 document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
@@ -1241,16 +1290,6 @@
         });
     }
 
-    // 🏆 リッチランキング用 テーマ設定
-    const rankThemes = {
-        pb: { title: "⏱️ 自己ベスト ランキング", bg: "bg-blue-600", text: "text-blue-600", btn: "bg-blue-100 text-blue-800", active: "bg-blue-600 text-white shadow-md transform scale-105" },
-        pbDiff: { title: "📈 成長幅(PB更新) ランキング", bg: "bg-green-600", text: "text-green-600", btn: "bg-green-100 text-green-800", active: "bg-green-600 text-white shadow-md transform scale-105" },
-        injury: { title: "🏥 怪我王 ランキング", bg: "bg-red-600", text: "text-red-600", btn: "bg-red-100 text-red-800", active: "bg-red-600 text-white shadow-md transform scale-105" },
-        money: { title: "💰 総獲得金額 ランキング", bg: "bg-yellow-500", text: "text-yellow-600", btn: "bg-yellow-100 text-yellow-800", active: "bg-yellow-500 text-white shadow-md transform scale-105" },
-        pbCount: { title: "🔥 PB更新回数 ランキング", bg: "bg-orange-500", text: "text-orange-600", btn: "bg-orange-100 text-orange-800", active: "bg-orange-500 text-white shadow-md transform scale-105" },
-        rta: { title: "👑 世界優勝RTA ランキング", bg: "bg-purple-600", text: "text-purple-600", btn: "bg-purple-100 text-purple-800", active: "bg-purple-600 text-white shadow-md transform scale-105" }
-    };
-
     function showTournamentResult(tName, pData) {
         document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); 
         getEl('screen-tournament').classList.add('active');
@@ -1288,9 +1327,10 @@
             d.a.logs.push({n:`${year}年 ${tName}`, t:d.res.time, pb:d.res.isPB, inj:d.a.isInjured, r});
             
             if(d.a.isPlayer) {
-                if (!isSelection) {
+                if (!isSelection && prz > 0) {
                     d.a.money += prz;
                     window.totalEarnedMoney += prz;
+                    log(`💰 ${tName} ${r}位の賞金 ${prz.toLocaleString()}円を獲得しました！ (残高: ${d.a.money.toLocaleString()}円)`);
                 }
                 
                 let tm = isSelection ? `選考会 ${r}位！` : `${tName} ${r}位！`;
@@ -1320,28 +1360,25 @@
         
         if (isSelection) {
             if (curQuals.includes(p)) {
-                let finalEv = (cEv === "normal_effort" || cEv === "over" || cEv === "under" || cEv === "pb") ? "qualified" : cEv;
-                upCoach(p.isInjured ? "inj" : finalEv);
+                upCoach(p.isInjured ? "inj" : "qualified", 5, tName.replace('選考',''));
             } else {
-                upCoach("not_qualified");
+                upCoach("not_qualified", 5, tName.replace('選考',''));
             }
         } else {
             if (isPlayerIn) {
-                upCoach(p.isInjured ? "inj" : cEv);
+                upCoach(p.isInjured ? "inj" : cEv, 5, tName);
             } else {
-                upCoach("not_qualified");
+                upCoach("not_qualified", 5, tName);
             }
         }
 
-        if (!isSelection && tName === '国際大会') {
-            let myResult = pData.find(d => d.a.isPlayer);
-            if (myResult && pData.indexOf(myResult) === 0) { 
-                if (!hasClearedThisRun) {
-                    hasClearedThisRun = true;
-                    window.gameClearRTA = phaseCount;
-                    window.clearTimeString = `${year}年目 秋`;
-                    setTimeout(() => { showCelebration(myResult.res.time); }, 1000);
-                }
+        // RTA & 優勝セレブレーション判定
+        if (!isSelection && tName === '国際大会' && pData.some(d => d.a.isPlayer && d.a.logs[d.a.logs.length-1].r === 1)) {
+            if (!hasClearedThisRun) {
+                hasClearedThisRun = true;
+                window.gameClearRTA = phaseCount;
+                window.clearTimeString = `${year}年目 秋`;
+                setTimeout(() => { showCelebration(p.pb); }, 1000);
             }
         }
 
@@ -1362,13 +1399,20 @@
         }
 
         if (curQuals.includes(p)) {
+            if (tName === '日本選手権') {
+                p.money += 30000;
+                window.totalEarnedMoney += 30000;
+                log(`💌 家族から日本選手権出場のお祝い金として 30,000円 が届きました！ (残高: ${p.money.toLocaleString()}円)`);
+                showToast("💌 家族からお祝い金 +30,000円", "success");
+            }
+
             if (fee > 0) {
-                if (p.money < fee) {
-                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態） (残高: ${(p.money - fee).toLocaleString()}円)`);
-                } else {
-                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。 (残高: ${(p.money - fee).toLocaleString()}円)`);
-                }
                 p.money -= fee;
+                if (p.money < 0) {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態） (残高: ${p.money.toLocaleString()}円)`);
+                } else {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
+                }
             }
             if (tName === '国際大会') {
                 let bonus = (Math.floor(Math.random() * 6) + 5) * 10000; 
@@ -1444,7 +1488,7 @@
         let rData = curRelayData.map(d => {
             let tt = 0, laps = [], segs = [];
             d.team.forEach((a,i) => { let res = a.runRace(1,true,i===0?0:-0.6); tt+=res.time; laps.push({a, t:res.time}); segs.push(tt); });
-            return { a:{isPlayer:d.pI!==-1, univ:d.u, name:d.u, idStr:d.pI!==-1?`あなた(${d.pI+1}走)`:d.u===UNIVS[0]?"自大学":d.u.substring(0,3)}, res:{time:tt, segs}, laps, isMyPlayerInRelay: d.pI!==-1 };
+            return { a:{isPlayer:d.pI!==-1, univ:d.u, name:d.u, idStr:d.pI!==-1?`あなた(${d.pI+1}走)`:d.u===UNIVS[0]?"自大学":d.u.substring(0,3)}, res:{time:tt, segs}, laps };
         });
 
         rData.forEach(d => {
@@ -1467,14 +1511,14 @@
                 let r=i+1, isMy = d.a.univ===UNIVS[0], h = `<div class="relay-header">${r}位: ${d.a.univ} (${fmt(d.res.time)})</div>`;
                 if(isMy) { 
                     let prz = r === 1 ? 30000 : r === 2 ? 20000 : r === 3 ? 10000 : 0;
-                    if (!d.isMyPlayerInRelay) prz = Math.floor(prz / 10);
-
                     if(prz > 0) {
-                        agents[pId].money += prz; 
-                        window.totalEarnedMoney += prz;
-                        let msgTitle = d.isMyPlayerInRelay ? "上位入賞" : "応援ボーナス";
-                        h += `<span class="success text-green-600 font-bold">${msgTitle}！(賞金+${prz.toLocaleString()}円)</span><br>`; 
-                        log(`💰 リレー${r}位入賞（${msgTitle}）で、賞金 ${prz.toLocaleString()}円を獲得しました！ (残高: ${agents[pId].money.toLocaleString()}円)`);
+                        let myRun = d.a.isPlayer;
+                        let actualPrz = myRun ? prz : prz / 10;
+                        agents[pId].money += actualPrz; 
+                        window.totalEarnedMoney += actualPrz;
+                        let msgText = myRun ? `上位入賞！(賞金+${actualPrz.toLocaleString()}円)` : `チーム入賞！(応援ボーナス+${actualPrz.toLocaleString()}円)`;
+                        h += `<span class="success text-green-600 font-bold">${msgText}</span><br>`; 
+                        log(`💰 リレー${r}位入賞で、${myRun?'賞金':'応援ボーナス'} ${actualPrz.toLocaleString()}円を獲得しました！ (残高: ${agents[pId].money.toLocaleString()}円)`);
                     }
                 }
                 h += d.laps.map((l,li) => {
@@ -1487,10 +1531,10 @@
                 }).join(''); return `<div class="relay-box ${isMy?'relay-mine':''}">${h}</div>`;
             }).join('');
             
-            if(rData.some(d=>d.isMyPlayerInRelay)) {
-                upCoach(cEv);
+            if(rData.some(d=>d.a.isPlayer)) {
+                upCoach(cEv, 5, curTourney);
             } else {
-                upCoach("not_qualified");
+                upCoach("not_qualified", 5, curTourney);
             }
         });
     }
@@ -1502,19 +1546,24 @@
         let recM_player = null;
         let oldAbility = p.ability;
 
-        if (isPrizeMeet && p.money < 10000) {
-            showToast("資金不足で大会に出場できません！", "fail");
-            isPrizeMeet = false;
-            getEl('input-prize-meet').checked = false;
-        }
-
         if (isPrizeMeet) {
-            p.money -= 10000;
-            log(`💸 賞金大会の参加費 10,000円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
+            let qual = getValidQualRecord(p);
+            if (qual > 47.00) {
+                showToast("標準(47.00秒)未達", "fail");
+                log(`❌ グランプリの参加標準記録(47.00秒)に達していないため、出場を断念しました。(資格記録: ${qual.toFixed(2)}秒)`);
+                isPrizeMeet = false;
+                getEl('input-prize-meet').checked = false;
+            } else if (p.money < 10000) {
+                showToast("資金不足で出場不可", "fail");
+                isPrizeMeet = false;
+                getEl('input-prize-meet').checked = false;
+            } else {
+                p.money -= 10000;
+                log(`💸 夏・グランプリの参加費 10,000円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
+            }
         }
 
         let careEff = SHOP.care.effects[careLevel] || 0;
-        let p_start_ability = p.ability;
 
         agents.filter(a=>a.isActive).forEach(a => {
             let e = a.isPlayer ? p_e : (5 + Math.random()*4), ai_m = isWinter||a.isPlayer ? m : Math.floor(Math.random()*3)+1;
@@ -1572,19 +1621,19 @@
             log(`🏥 怪我のためグランプリを棄権しました...`);
         }
 
-        let p_end_ability = p.ability;
-        let diffStr = (p_start_ability - p_end_ability) > 0 ? `-${(p_start_ability - p_end_ability).toFixed(2)}秒` : `+${(p_end_ability - p_start_ability).toFixed(2)}秒`;
+        let diff = oldAbility - p.ability;
+        let msg = isWinter ? `[冬完] ベース走力変動` : `[夏完] 記録会:${m}回 疲労:${p.fatigue.toFixed(1)}`;
+        msg += `<br>└ 走力: ${diff > 0 ? '-' : '+'}${Math.abs(diff).toFixed(2)}秒 (現在: ${p.ability.toFixed(2)}秒)`;
 
-        let msg = isWinter ? `[冬完] 走力変動: ${diffStr} (現在: ${p.ability.toFixed(2)})` : `[夏完] 走力変動: ${diffStr} / 記録会:${m}回 疲労:${p.fatigue.toFixed(1)}`;
         if(p.isInjured) { 
-            msg+=` <span class="injury">※怪我発生</span>`; 
+            msg+=`<br><span class="injury">※怪我発生</span>`; 
             showToast("🏥 怪我発生","fail"); 
             upCoach("inj", p_e); 
         } else {
             if(!isWinter && m>0) {
                 let pbs = p.logs.slice(-m).filter(l=>l.pb);
                 msg+=`<br>└ ベスト: ${p.lastTime.toFixed(2)}秒 ${pbs.length?"<span class='highlight'>★PB!</span>":""}`;
-                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += ` <b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player), p_e); }
+                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += `<br><b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player), p_e); }
                 else if(pbs.length) { showToast("記録会<br>★PB更新★","pb"); upCoach("pb", p_e); } 
                 else upCoach("normal_effort", p_e);
             } else { 
@@ -1659,7 +1708,7 @@
         if (year > 4) {
             showEnd();
         } else {
-            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-1 border-b border-gray-600 pb-1"><strong>${year}年目開始。</strong></div>`);
+            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>${year}年目開始。</strong></div>`);
             setPhase('spring-sel');
         }
     }
@@ -1690,6 +1739,7 @@
         if(getEl('agent-modal')) getEl('agent-modal').style.display = 'none';
     }
 
+    // --- ランキング連携機能群 ---
     function openRankingModal() {
         getEl('ranking-modal-overlay').style.display = 'block';
         getEl('ranking-modal').style.display = 'block';
@@ -1699,6 +1749,46 @@
     function closeRankingModal() {
         getEl('ranking-modal-overlay').style.display = 'none';
         getEl('ranking-modal').style.display = 'none';
+    }
+
+    // 世界優勝した瞬間にRTAのみを即時登録する関数
+    async function registerRTAFromCeleb() {
+        if(window.hasRegisteredRTA) return;
+        
+        let name = getEl('celeb-player-name').value.trim() || '名無し';
+        let pData = { name: name, date: new Date().toLocaleDateString() };
+        
+        let btn = getEl('celeb-reg-btn');
+        btn.disabled = true;
+        btn.innerText = "送信中...";
+
+        let e = {tab: 'rta', data: {...pData, val: gameClearRTA, text: clearTimeString}};
+        
+        let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
+        if(!r.rta) r.rta = [];
+        r.rta.push(e.data);
+        r.rta.sort((a,b) => a.val - b.val);
+
+        let onlineSuccess = false;
+        if (window.saveRankingOnline) {
+            try {
+                onlineSuccess = await window.saveRankingOnline(e.tab, e.data);
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        localStorage.setItem('tfs_rankings', JSON.stringify(r));
+        window.hasRegisteredRTA = true;
+
+        btn.innerText = "登録完了";
+        btn.className = "bg-gray-500 text-white font-bold py-3 px-6 rounded shadow-md cursor-not-allowed w-full md:w-auto";
+
+        if(onlineSuccess) {
+            showToast("👑 RTAランキングに登録しました！", "success");
+        } else {
+            showToast("ローカルに保存しました", "info");
+        }
     }
 
     async function registerToRanking() {
@@ -1716,41 +1806,60 @@
             let pbUpdateCount = p.logs.filter(l => l.pb).length;
             entries.push({tab: 'pbCount', data: {...pData, val: pbUpdateCount}});
         }
-        if (hasClearedThisRun && gameClearRTA > 0) {
+        
+        if (hasClearedThisRun && gameClearRTA > 0 && !window.hasRegisteredRTA) {
             entries.push({tab: 'rta', data: {...pData, val: gameClearRTA, text: clearTimeString}});
+            window.hasRegisteredRTA = true; 
+        }
+
+        if (entries.length === 0) {
+            showToast("登録できる記録がありません", "fail");
+            return;
         }
 
         let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
         
-        getEl('ranking-reg-desc').innerHTML = "<span class='text-blue-600 font-bold'>クラウドサーバーに送信中...</span>";
         let btn = getEl('ranking-reg-btn');
-        if(btn) btn.disabled = true;
+        if(btn) {
+            btn.disabled = true;
+            btn.innerText = "送信中...";
+        }
 
         let onlineSuccess = false;
-        for (let e of entries) {
-            r[e.tab].push(e.data);
-            if (e.tab === 'pbDiff' || e.tab === 'injury' || e.tab === 'money' || e.tab === 'pbCount') {
-                r[e.tab].sort((a,b) => b.val - a.val);
-            } else {
-                r[e.tab].sort((a,b) => a.val - b.val);
+        try {
+            for (let e of entries) {
+                if(!r[e.tab]) r[e.tab] = [];
+                r[e.tab].push(e.data);
+                if (e.tab === 'pbDiff' || e.tab === 'injury' || e.tab === 'money' || e.tab === 'pbCount') {
+                    r[e.tab].sort((a,b) => b.val - a.val);
+                } else {
+                    r[e.tab].sort((a,b) => a.val - b.val);
+                }
+                
+                if (window.saveRankingOnline) {
+                    let success = await window.saveRankingOnline(e.tab, e.data);
+                    if(success) onlineSuccess = true;
+                }
             }
-            
-            if (window.saveRankingOnline) {
-                let success = await window.saveRankingOnline(e.tab, e.data);
-                if(success) onlineSuccess = true;
-            }
+        } catch (e) {
+            console.error("保存処理中にエラーが発生しました", e);
         }
         
         localStorage.setItem('tfs_rankings', JSON.stringify(r));
         hasRegisteredRanking = true;
         
+        if(btn) {
+            btn.innerText = "登録完了";
+            btn.classList.add('bg-gray-500');
+            btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+        }
+
         if(onlineSuccess) {
             showToast("オンラインランキングに登録しました！", "success");
         } else {
             showToast("ローカルランキングに登録しました", "info");
         }
         
-        getEl('ranking-registration-area').style.display = 'none';
         openRankingModal();
     }
 
@@ -1763,6 +1872,16 @@
         if (tab === 'rta') return text;
         return val;
     }
+
+    // 🏆 リッチランキング用 テーマ設定
+    const rankThemes = {
+        pb: { title: "⏱️ 自己ベスト ランキング", bg: "bg-blue-600", text: "text-blue-600", btn: "bg-blue-100 text-blue-800", active: "bg-blue-600 text-white shadow-md transform scale-105" },
+        pbDiff: { title: "📈 成長幅(PB更新) ランキング", bg: "bg-green-600", text: "text-green-600", btn: "bg-green-100 text-green-800", active: "bg-green-600 text-white shadow-md transform scale-105" },
+        injury: { title: "🏥 怪我王 ランキング", bg: "bg-red-600", text: "text-red-600", btn: "bg-red-100 text-red-800", active: "bg-red-600 text-white shadow-md transform scale-105" },
+        money: { title: "💰 総獲得金額 ランキング", bg: "bg-yellow-500", text: "text-yellow-600", btn: "bg-yellow-100 text-yellow-800", active: "bg-yellow-500 text-white shadow-md transform scale-105" },
+        pbCount: { title: "🔥 PB更新回数 ランキング", bg: "bg-orange-500", text: "text-orange-600", btn: "bg-orange-100 text-orange-800", active: "bg-orange-500 text-white shadow-md transform scale-105" },
+        rta: { title: "👑 世界優勝RTA ランキング", bg: "bg-purple-600", text: "text-purple-600", btn: "bg-purple-100 text-purple-800", active: "bg-purple-600 text-white shadow-md transform scale-105" }
+    };
 
     async function showRankingTab(tab) {
         Object.keys(rankThemes).forEach(k => {
@@ -1820,17 +1939,20 @@
 
     function showEnd() {
         document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); getEl('screen-result').classList.add('active');
-        
         let t = agents.filter(a=>a.univ===UNIVS[0]).sort((a,b)=>(b.money||0)-(a.money||0));
         getEl('final-table-body').innerHTML = t.map((a,i) => `<tr class="${a.isPlayer?'player-row':!a.isActive?'bg-gray-100 text-gray-500':''}"><td class="py-1">${i+1}</td><td class="py-1">${a.name}${a.isActive?'':'(引退)'}</td><td class="py-1">${a.pb.toFixed(2)}</td><td class="py-1 text-green-600 font-bold">${(a.money||0).toLocaleString()} 円</td></tr>`).join('');
         getEl('result-agent-select').innerHTML = t.map(a => `<option value="${a.id}" ${a.isPlayer?'selected':''}>${a.name}${a.isActive?'':'(引退)'} (${a.pb.toFixed(2)}秒 / ${(a.money||0).toLocaleString()}円)</option>`).join('');
         drawResult();
 
-        if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && gameClearRTA > 0))) {
-            getEl('ranking-registration-area').style.display = 'block';
+        // 登録エリアの表示ロジック
+        if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && gameClearRTA > 0 && !window.hasRegisteredRTA))) {
+            let regArea = getEl('ranking-registration-area');
+            regArea.classList.remove('hidden'); 
+            regArea.style.display = 'block';
+            
             let desc = '';
             if (!isNGPFlag) desc += '🌟 1周目限定の全5部門にエントリー可能！<br>';
-            if (hasClearedThisRun) desc += `⏱️ 世界優勝RTA（${clearTimeString}）の記録が保存されます！`;
+            if (hasClearedThisRun && !window.hasRegisteredRTA) desc += `⏱️ 世界優勝RTA（${clearTimeString}）の記録が保存されます！`;
             getEl('ranking-reg-desc').innerHTML = desc;
         } else {
             getEl('ranking-registration-area').style.display = 'none';
