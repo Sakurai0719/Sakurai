@@ -29,6 +29,7 @@
         .highlight { color: #f1c40f; font-weight: bold; }
         .injury { color: #e74c3c; font-weight: bold; }
         .success { color: #2ecc71; font-weight: bold;}
+        
         table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
         th { background: #2c3e50; color: white; position: sticky; top: 0; z-index: 10; }
@@ -66,13 +67,12 @@
         details > summary::-webkit-details-marker { display: none; }
     </style>
 
-    <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // ご提示いただいた設定
+        // Firebase設定
         const firebaseConfig = {
             apiKey: "AIzaSyCcm0VxhPW-G4VDiMiXQQtjHAY1Vl25Zwc",
             authDomain: "ikuseiharunosuke.firebaseapp.com",
@@ -130,12 +130,10 @@
             }
         };
     </script>
-    <!-- ▲▲▲ Firebase Online Ranking Setup ▲▲▲ -->
 </head>
 <body>
 <div id="toast-container"></div>
 
-<!-- ヘルプ・エージェントモーダル -->
 <div id="help-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeHelpModal()"></div>
 <div id="help-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg z-[9999] w-11/12 max-w-md hidden shadow-2xl">
     <h3 id="help-title" class="text-xl font-bold mb-2 text-gray-800"></h3>
@@ -154,7 +152,6 @@
     <div class="text-center"><button onclick="closeAgentModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold">閉じる</button></div>
 </div>
 
-<!-- ランキングモーダル -->
 <div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeRankingModal()"></div>
 <div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-5 rounded-lg z-[9999] w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto hidden shadow-2xl">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">🏆 殿堂入りランキング</h2>
@@ -168,6 +165,17 @@
     </div>
     <div id="ranking-content" class="bg-gray-50 p-4 rounded border min-h-[200px] max-h-[400px] overflow-y-auto"></div>
     <div class="text-center mt-4"><button onclick="closeRankingModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold w-full">閉じる</button></div>
+</div>
+
+<div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[9998] hidden"></div>
+<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400">
+    <h2 class="text-4xl font-extrabold text-yellow-500 mb-4">👑 WORLD CHAMPION!</h2>
+    <p class="text-lg text-gray-700 font-bold mb-6">ついに世界大会での優勝を果たしました！</p>
+    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6 text-left">
+        <p class="font-bold text-gray-800 mb-2">👨‍💻 開発者 ハルノスケより</p>
+        <p id="celeb-msg" class="text-sm text-gray-700 leading-relaxed"></p>
+    </div>
+    <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">次へ進む</button>
 </div>
 
 <div class="container">
@@ -409,7 +417,6 @@
     <div id="screen-result" class="screen bg-white p-6 rounded-lg shadow-xl">
         <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 pb-2">🏁 4年間の最終結果</h2>
         
-        <!-- ▼ ランキング登録エリア ▼ -->
         <div id="ranking-registration-area" class="bg-yellow-50 border border-yellow-300 p-4 rounded mb-6 text-center shadow-sm hidden">
             <h3 class="font-bold text-yellow-800 mb-2">🏅 殿堂入りランキングに登録！</h3>
             <p id="ranking-reg-desc" class="text-sm text-gray-600 mb-3">1周目限定部門と世界優勝RTAにあなたの記録を残せます。</p>
@@ -419,7 +426,6 @@
         <div class="text-center mb-6">
             <button onclick="openRankingModal()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded shadow">🏆 ランキングを見る</button>
         </div>
-        <!-- ▲ ランキング登録エリア ▲ -->
 
         <div class="mb-4">
             <label class="font-bold mr-2">表示する選手:</label>
@@ -459,7 +465,6 @@
 </div>
 
 <script>
-    // ページロード時にFirebaseの初期化を試みる
     document.addEventListener("DOMContentLoaded", () => {
         if(window.initFirebaseAuth) window.initFirebaseAuth();
     });
@@ -555,7 +560,6 @@
         }
     };
     
-    // 全体管理用ステータス変数
     let careLevel = 0;
     let spikeLevel = 0;
     let usedSpecialFood = false;
@@ -568,7 +572,6 @@
     let myUnivIdCounter = 11;
     let ngpData = null;
 
-    // RTA & 殿堂入りランキング用変数
     let playerInitialPB = 0;
     let totalEarnedMoney = 0;
     let injuryCount = 0;
@@ -1279,7 +1282,6 @@
             }
         }
 
-        // RTA & 優勝セレブレーション判定
         if (!isSelection && tName === '国際大会' && pData.some(d => d.a.isPlayer && d.a.logs[d.a.logs.length-1].r === 1)) {
             if (!hasClearedThisRun) {
                 hasClearedThisRun = true;
@@ -1663,7 +1665,6 @@
         if(getEl('agent-modal')) getEl('agent-modal').style.display = 'none';
     }
 
-    // --- ランキング連携機能群 ---
     function openRankingModal() {
         getEl('ranking-modal-overlay').style.display = 'block';
         getEl('ranking-modal').style.display = 'block';
@@ -1783,7 +1784,6 @@
         getEl('result-agent-select').innerHTML = t.map(a => `<option value="${a.id}" ${a.isPlayer?'selected':''}>${a.name}${a.isActive?'':'(引退)'} (${a.pb.toFixed(2)}秒 / ${(a.money||0).toLocaleString()}円)</option>`).join('');
         drawResult();
 
-        // 登録エリアの表示ロジック
         if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && gameClearRTA > 0))) {
             getEl('ranking-registration-area').style.display = 'block';
             let desc = '';
