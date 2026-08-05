@@ -24,7 +24,7 @@
         .rival-panel { background: #fff; border: 1px solid #bdc3c7; padding: 15px; border-radius: 5px; }
         .shop-panel { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 5px; }
         
-        .log-area { max-height: 160px; overflow-y: auto; background: #2c3e50; color: #ecf0f1; padding: 12px; border-radius: 5px; font-family: monospace; font-size: 13px; line-height: 1.5; }
+        .log-area { margin-top: 20px; max-height: 250px; overflow-y: auto; background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 14px; line-height: 1.5; }
         .coach-comment { background: #dff9fb; border-left: 5px solid #22a6b3; padding: 10px; margin-top: 10px; font-weight: bold; border-radius: 3px; }
         .highlight { color: #f1c40f; font-weight: bold; }
         .injury { color: #e74c3c; font-weight: bold; }
@@ -46,10 +46,7 @@
         @keyframes pop { 0% { opacity:0; transform:scale(0.5); } 15%,80% { opacity:1; transform:scale(1); } 100% { opacity:0; transform:scale(1.2); } }
         
         @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
-        
-        details > summary { list-style: none; outline: none; }
-        details > summary::-webkit-details-marker { display: none; }
-        
+
         .medal-gold { color: #f1c40f; font-size: 18px;} .medal-silver { color: #bdc3c7; font-size: 18px;} .medal-bronze { color: #cd7f32; font-size: 18px;}
         
         #race-canvas-container { width: 100%; background: #2c3e50; border-radius: 8px; padding: 10px 0; overflow: hidden; display: flex; justify-content: center; }
@@ -64,6 +61,9 @@
         
         .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #95a5a6; color: white; border-radius: 50%; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 4px; vertical-align: middle; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .help-icon:hover { background: #34495e; transform: scale(1.1); }
+
+        details > summary { list-style: none; outline: none; }
+        details > summary::-webkit-details-marker { display: none; }
     </style>
 </head>
 <body>
@@ -71,9 +71,9 @@
 
 <div id="help-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeHelpModal()"></div>
 <div id="help-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg z-[9999] w-11/12 max-w-md hidden shadow-2xl">
-    <h3 id="help-title" class="text-xl font-bold mb-3 text-gray-800"></h3>
-    <p id="help-desc" class="text-sm text-gray-600 leading-relaxed mb-5"></p>
-    <div class="text-center"><button onclick="closeHelpModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold w-full">閉じる</button></div>
+    <h3 id="help-title" class="text-xl font-bold mb-2 text-gray-800"></h3>
+    <p id="help-desc" class="text-sm text-gray-600 leading-relaxed mb-4"></p>
+    <div class="text-center"><button onclick="closeHelpModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-bold w-full">閉じる</button></div>
 </div>
 
 <div id="agent-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeAgentModal()"></div>
@@ -91,11 +91,11 @@
     <div id="screen-setup" class="screen active text-center pt-8">
         <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">🏃 大学陸上 4年間プロシミュレーション</h1>
         <h2 class="text-2xl mb-4 text-gray-700">プレイヤー作成</h2>
-        <p class="mb-4 text-gray-600 text-sm md:text-base">あなたの名前は「ハルノスケ」です。<br>レース展開の作戦を選択してください。<br>（初期自己ベストは平均48.0秒の正規分布で決定されます）</p>
+        <p class="mb-4 text-gray-600">あなたの名前は「ハルノスケ」です。<br>レース展開の作戦を選択してください。<br>（初期自己ベストは平均48.0秒の正規分布でランダムに決定されます）</p>
         
-        <div class="mb-8 flex flex-col items-center justify-center">
-            <label class="font-bold text-lg mb-2 flex items-center">🏃 レース展開 <span class="help-icon" onclick="showHelp('strategy')">?</span>:</label>
-            <select id="player-strategy" class="p-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 w-full max-w-xs shadow-sm">
+        <div class="mb-6 flex justify-center items-center">
+            <label class="font-bold text-lg mr-2 flex items-center">🏃 レース展開 <span class="help-icon" onclick="showHelp('strategy')">?</span>:</label>
+            <select id="player-strategy" class="p-3 border rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
                 <option value="FRONT">先行型 (前半から突っ込む)</option>
                 <option value="EVEN" selected>バランス型 (イーブンペース)</option>
                 <option value="BACK">後半型 (ラストスパート)</option>
@@ -110,7 +110,7 @@
         
         <div class="dashboard">
             <div class="main-col">
-                <!-- ログパネルを最上部へ配置（スマホで見やすくするため） -->
+                <!-- スマホ向けにログを最上部へ -->
                 <div class="panel shadow bg-gray-50 border border-gray-200">
                     <h3 class="text-lg font-bold mb-2 text-gray-700">📝 進行ログ</h3>
                     <div class="log-area shadow-inner mt-0" id="log-area"></div>
@@ -160,7 +160,7 @@
                             <input type="range" id="input-summer-e" min="2" max="10" step="0.1" value="6.0" oninput="updateRisk()" class="mt-2">
                         </div>
                         <div class="mb-4 flex items-center justify-between bg-white p-2 rounded border">
-                            <label class="font-bold text-sm flex items-center">⏱️ 記録会出場 <span class="help-icon" onclick="showHelp('meets')">?</span></label>
+                            <label class="font-bold text-sm flex items-center">⏱️ 記録会出場 <span class="help-icon" onclick="showHelp('meets')">?</span>:</label>
                             <select id="input-summer-m" class="p-1 border rounded focus:outline-none" onchange="updateRisk()">
                                 <option value="0">0回</option><option value="1">1回</option><option value="2" selected>2回</option>
                                 <option value="3">3回</option><option value="4">4回</option><option value="5">5回(ハード)</option>
@@ -365,43 +365,6 @@
 </div>
 
 <script>
-    const getEl = id => document.getElementById(id);
-    const randn = (mean, sd) => mean + sd * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * (1 - Math.random()));
-    const fmt = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
-    const log = m => getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2">${m}</div>`);
-    const showToast = (html, cls="info") => {
-        let tc = getEl('toast-container');
-        if(!tc) return;
-        tc.innerHTML = `<div class="toast ${cls}">${html}</div>`;
-        tc.style.display = 'block';
-        setTimeout(() => tc.style.display = 'none', 2500);
-    };
-
-    function showHelpModalCustom(title, descHtml) {
-        getEl('help-title').innerText = title;
-        getEl('help-desc').innerHTML = descHtml;
-        getEl('help-modal-overlay').style.display = 'block';
-        getEl('help-modal').style.display = 'block';
-    }
-
-    const helpTexts = {
-        ability: { t: "走力とは？", d: "現在の調子や疲労を無視した純粋な「ベースの速さ」です。練習で成長しますが、レースではこれに調子や怪我のペナルティが加算されます。" },
-        fatigue: { t: "疲労度とは？", d: "0〜10の値で表され、高いほど怪我をする確率が二次関数的に跳ね上がります。" },
-        effort: { t: "総努力量とは？", d: "2.0〜10.0の範囲で設定する練習の全体量です。高いほど走力が伸びやすいですが、疲労度が急激に蓄積し怪我のリスクが高まります。" },
-        meets: { t: "記録会出場とは？", d: "夏の期間に出場する記録会の回数です。出場するほど自己ベスト更新のチャンスが増えますが、1回ごとに大きな疲労が蓄積します。" },
-        strategy: { t: "レース展開とは？", d: "レースでのペース配分です。先行型は前半から突っ込み、後半型はラストスパートにかけます。"},
-        qualifying: { t: "資格記録とは？", d: "昨シーズンまたは今シーズンに出した最も良いタイムです。各大会に出場するには、この有効な資格記録が標準記録を突破している必要があります。"},
-        'prize-meet': { t: "夏・グランプリとは？", d: "夏に開催されるオープン大会です。参加標準記録は<strong class='text-red-500'>47.00秒</strong>、参加費が10,000円かかりますが、好記録が出やすく(-0.20秒)、実業団などのシニア選手が出場するため高いレベルのレースが経験できます。上位入賞で高額な賞金が得られます。" }
-    };
-
-    function showHelp(key) {
-        if(helpTexts[key]) showHelpModalCustom(helpTexts[key].t, helpTexts[key].d);
-    }
-    function closeHelpModal() {
-        if(getEl('help-modal-overlay')) getEl('help-modal-overlay').style.display = 'none';
-        if(getEl('help-modal')) getEl('help-modal').style.display = 'none';
-    }
-
     function triggerConfetti() {
         for(let i=0; i<100; i++){
             let div = document.createElement('div');
@@ -417,6 +380,48 @@
             document.body.appendChild(div);
             setTimeout(()=>div.remove(), 4500);
         }
+    }
+
+    function showHelpModalCustom(title, descHtml) {
+        getEl('help-title').innerText = title;
+        getEl('help-desc').innerHTML = descHtml;
+        getEl('help-modal-overlay').style.display = 'block';
+        getEl('help-modal').style.display = 'block';
+    }
+
+    const getEl = id => document.getElementById(id);
+    const randn = (mean, sd) => mean + sd * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * (1 - Math.random()));
+    const fmt = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
+    const log = m => getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2">${m}</div>`);
+    const showToast = (html, cls="info") => {
+        let tc = getEl('toast-container');
+        if(!tc) return;
+        tc.innerHTML = `<div class="toast ${cls}">${html}</div>`;
+        tc.style.display = 'block';
+        setTimeout(() => tc.style.display = 'none', 2500);
+    };
+
+    const helpTexts = {
+        ability: { t: "走力とは？", d: "現在の調子や疲労を無視した純粋な「ベースの速さ」です。練習で成長しますが、レースではこれに調子や怪我のペナルティが加算されます。" },
+        fatigue: { t: "疲労度とは？", d: "0〜10の値で表され、高いほど怪我をする確率が二次関数的に跳ね上がります。" },
+        effort: { t: "総努力量とは？", d: "2.0〜10.0の範囲で設定する練習の全体量です。高いほど走力が伸びやすいですが、疲労度が急激に蓄積し怪我のリスクが高まります。" },
+        meets: { t: "記録会出場とは？", d: "夏の期間に出場する記録会の回数です。出場するほど自己ベスト更新のチャンスが増えますが、1回ごとに大きな疲労が蓄積します。" },
+        strategy: { t: "レース展開とは？", d: "レースでのペース配分です。先行型は前半から突っ込み、後半型はラストスパートにかけます。"},
+        qualifying: { t: "資格記録とは？", d: "昨シーズンまたは今シーズンに出した最も良いタイムです。各大会に出場するには、この有効な資格記録が標準記録を突破している必要があります。"},
+        'prize-meet': { t: "夏・グランプリとは？", d: "夏に開催されるオープン大会です。参加標準記録は<strong class='text-red-500'>47.00秒</strong>、参加費が10,000円かかりますが、好記録が出やすく(-0.20秒)、実業団などのシニア選手が出場するため高いレベルのレースが経験できます。上位入賞で高額な賞金が得られます。" }
+    };
+
+    function showHelp(key) {
+        if(helpTexts[key] && getEl('help-title')) {
+            getEl('help-title').innerText = helpTexts[key].t;
+            getEl('help-desc').innerHTML = helpTexts[key].d;
+            getEl('help-modal-overlay').style.display = 'block';
+            getEl('help-modal').style.display = 'block';
+        }
+    }
+    function closeHelpModal() {
+        if(getEl('help-modal-overlay')) getEl('help-modal-overlay').style.display = 'none';
+        if(getEl('help-modal')) getEl('help-modal').style.display = 'none';
     }
 
     const UNIVS = ["筑波大学", "早稲田大学", "順天堂大学", "日本大学", "東海大学", "法政大学", "東洋大学", "中央大学", "日本体育大学", "慶應義塾大学", "城西大学"];
@@ -504,7 +509,6 @@
             let isPB = !isR && !this.isInjured && t < this.pb, recM = null;
             if (isPB) { 
                 this.pb = t; 
-                if (this.isPlayer) this.money += 20000; 
                 let msg = null;
                 if (t < 43.03) {
                     msg = "🌍 世界新記録！";
@@ -513,11 +517,17 @@
                 } else if (t < 44.98 && this.grade <= 4) {
                     msg = "🎓 学生新記録！";
                 }
+                
                 if (msg && !this.recFlags[msg]) {
                     recM = msg; this.recFlags[msg] = true;
                     if (this.isPlayer) {
-                        this.money += msg === "🌍 世界新記録！" ? 1000000 : msg === "🇯🇵 日本新記録！" ? 500000 : 200000;
+                        let b = msg === "🌍 世界新記録！" ? 1000000 : msg === "🇯🇵 日本新記録！" ? 500000 : 200000;
+                        this.money += b;
+                        log(`💰 新記録達成ボーナス ${b.toLocaleString()}円を獲得しました！ (残高: ${this.money.toLocaleString()}円)`);
                     }
+                } else if (this.isPlayer) {
+                    this.money += 20000; 
+                    log(`💰 自己ベスト更新ボーナス 20,000円を獲得しました！ (残高: ${this.money.toLocaleString()}円)`);
                 }
             }
             let br = this.strat === "FRONT" ? [0.23,0.24,0.26,0.27] : this.strat === "BACK" ? [0.25,0.25,0.24,0.26] : [0.24,0.25,0.25,0.26];
@@ -705,10 +715,15 @@
             "表彰台に乗って満足そうな顔するな。次はてっぺん取れ。",
             "メダル獲得おめでとう。だが俺はお前が真ん中に立つ姿を見たいんだ。"
         ],
-        relay: [
-            "リレーだけはまともに走るんだな。個人でもそれくらいやれ。",
-            "お前のラップ、ブレーキになりかけてたぞ。映像見返せ。",
-            "チームの足を引っ張らなかっただけマシだな。次はもっとタイムを削れ。"
+        relay_1_2: [
+            "下級生らしい勢いのあるラップだったぞ。",
+            "チームの勢いを加速させたな。よくやった。",
+            "先輩たちにしっかりついていったな。合格点だ。"
+        ],
+        relay_3_4: [
+            "上級生の意地を見せたな。リレーでもエースの走りだ。",
+            "チームを引っ張る素晴らしいラップだった。",
+            "これぞ頼れる先輩の走りだ。後輩たちも刺激を受けたはずだ。"
         ],
         rec_student: [
             "🎓 学生新記録！大学陸上界に名を刻んだな。",
@@ -755,46 +770,15 @@
             "無難な冬季練習だな。来春も無難なタイムしか出ないぞ。",
             "悪くはない。だがトッププロはもっと追い込んでいるぞ。"
         ],
-        qualified_春インカレ_1_2: [
-            "春インカレの切符をよく勝ち取った。勢いそのままに本戦も頼むぞ。",
-            "下級生で春の代表入りは見事だ。先輩たちを食ってこい。",
-            "選考会突破おめでとう。本戦でもお前の走りを見せてやれ。"
+        qualified_1_2: [
+            "下級生で代表枠を勝ち取ったか。だが参加するだけじゃ意味がないぞ。",
+            "よくやった。だが本番はこれからだ。先輩の胸を借りるつもりで走れ。",
+            "ここからが本当の勝負だ。大学のトップレベルを肌で感じてこい。"
         ],
-        qualified_春インカレ_3_4: [
-            "上級生として順当に春の代表入りだな。本戦で結果を残せ。",
-            "当然の結果だ。インカレでチームを引っ張るのはお前だぞ。",
-            "選考会はただの通過点だ。春の本舞台でしっかり勝ち切れ。"
-        ],
-        not_qualified_春インカレ_1_2: [
-            "春はまだ早いということだ。秋に向けて一から鍛え直せ。",
-            "これが大学の壁だ。悔しかったら夏の練習で死ぬ気で走れ。",
-            "選考落ちか。同級生が出てるのにスタンドで応援するのは辛いぞ。"
-        ],
-        not_qualified_春インカレ_3_4: [
-            "春インカレ落ちか。上級生として恥ずかしくないのか？",
-            "言い訳は聞かん。枠を取れなかったお前の実力不足だ。",
-            "ここで負けてどうする。チームの士気が下がるだろ。"
-        ],
-        
-        qualified_秋インカレ_1_2: [
-            "秋インカレ出場おめでとう。夏の練習の成果が出たな。",
-            "代表枠をもぎ取ったか。秋の大舞台で大暴れしてこい。",
-            "選考会を勝ち抜いた自信を持って、インカレに挑め。"
-        ],
-        qualified_秋インカレ_3_4: [
-            "秋の大舞台、お前に託したぞ。有終の美を飾ってこい。",
-            "最後のインカレ、悔いのないように準備しろよ。",
-            "上級生の意地を見せたな。本番でもエースの走りを見せてくれ。"
-        ],
-        not_qualified_秋インカレ_1_2: [
-            "秋のメンバーに入れなかったか。来年こそはレギュラーを奪え。",
-            "夏にサボったツケが回ってきたな。スタンドで先輩の走りを見て学べ。",
-            "実力不足だ。来年は言い訳できないぞ。"
-        ],
-        not_qualified_秋インカレ_3_4: [
-            "集大成の秋インカレを逃すとは…。お前の陸上はここで終わりか。",
-            "最後の秋に枠を奪えないとは情けない。後輩に枠を譲れて満足か？",
-            "まさかの選考落ち…。これが勝負の厳しさだ。"
+        qualified_3_4: [
+            "上級生としての意地を見せたな。本戦でも頼むぞ。",
+            "当然の結果だ。お前がチームを引っ張らなきゃ誰がやるんだ。",
+            "お前の走りでチームに勢いをつけてこい。期待してるぞ。"
         ],
         not_qualified_1_2: [
             "スタンドからの応援、悔しいか？来年はトラックに立て。",
@@ -810,16 +794,6 @@
             "最後の年でスタンドか。これが4年間のお前の実力だ。",
             "出られないお前の分まで走る仲間のために声を出せ。",
             "引退までサポートに徹しろ。それがお前の最後の仕事だ。"
-        ],
-        qualified_1_2: [
-            "下級生で代表枠を勝ち取ったか。だが参加するだけじゃ意味がないぞ。",
-            "よくやった。だが本番はこれからだ。先輩の胸を借りるつもりで走れ。",
-            "ここからが本当の勝負だ。大学のトップレベルを肌で感じてこい。"
-        ],
-        qualified_3_4: [
-            "上級生としての意地を見せたな。本戦でも頼むぞ。",
-            "当然の結果だ。お前がチームを引っ張らなきゃ誰がやるんだ。",
-            "お前の走りでチームに勢いをつけてこい。期待してるぞ。"
         ]
     };
 
@@ -857,8 +831,10 @@
         else if (ev === 'over') category = 'over';
         else if (ev === 'win') category = 'win';
         else if (ev === 'med') category = 'med';
-        else if (ev === 'relay') category = 'relay';
-        else if (ev.startsWith('rec_')) category = ev;
+        else if (ev === 'relay') category = `relay_${gradeGrp}`;
+        else if (ev === 'rec_world') category = 'rec_world';
+        else if (ev === 'rec_japan') category = 'rec_japan';
+        else if (ev === 'rec_student') category = 'rec_student';
         else if (ev === 'not_qualified') category = grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4';
         else if (ev === 'qualified') category = `qualified_${gradeGrp}`;
         else {
@@ -930,7 +906,7 @@
                 p.money -= cost;
                 careLevel++;
                 showToast(`ケア道具 Lv.${careLevel} 購入！`, "success");
-                log(`🛒 ケア道具 Lv.${careLevel} を購入しました。`);
+                log(`🛒 ケア道具 Lv.${careLevel} を購入しました。 (-${cost.toLocaleString()}円 / 残高: ${p.money.toLocaleString()}円)`);
             }
         } else if (type === 'spike') {
             let cost = SHOP.spike.costs[spikeLevel + 1];
@@ -938,7 +914,7 @@
                 p.money -= cost;
                 spikeLevel++;
                 showToast(`スパイク Lv.${spikeLevel} 購入！`, "success");
-                log(`🛒 スパイク Lv.${spikeLevel} を購入しました。`);
+                log(`🛒 スパイク Lv.${spikeLevel} を購入しました。 (-${cost.toLocaleString()}円 / 残高: ${p.money.toLocaleString()}円)`);
             }
         } else if (type === 'food') {
             if (!usedSpecialFood && p.money >= 20000) {
@@ -947,7 +923,7 @@
                 p.fatigue = Math.max(0, p.fatigue - 1.0);
                 p.ability -= 0.02; 
                 showToast(`特別食で回復！`, "success");
-                log(`🛒 特別食を購入し、疲労回復＆走力アップ！`);
+                log(`🛒 特別食を購入し、疲労回復＆走力アップ！ (-20,000円 / 残高: ${p.money.toLocaleString()}円)`);
             }
         }
         updateUI();
@@ -1003,7 +979,7 @@
         if (p && p.isActive) {
             if (['spring-sel', 'summer-prac', 'autumn-sel', 'winter'].includes(newPhase)) {
                 p.money += 30000;
-                log(`💰 親からの仕送り 30,000円 が届きました！`);
+                log(`💰 親からの仕送り 30,000円 が届きました！ (残高: ${p.money.toLocaleString()}円)`);
                 showToast("💰 仕送り +30,000円", "success");
             }
         }
@@ -1321,7 +1297,6 @@
         
         let cEv = "normal_effort";
         let p = agents[pId];
-        let isWorldChamp = false;
         
         getEl('tourney-table-body').innerHTML = pData.map((d,i) => {
             let r=i+1, rem="", cls = d.a.isPlayer ? "player-row" : d.a.univ===UNIVS[0] ? "teammate-row" : "";
@@ -1347,16 +1322,16 @@
             d.a.logs.push({n:`${year}年 ${tName}`, t:d.res.time, pb:d.res.isPB, inj:d.a.isInjured, r});
             
             if(d.a.isPlayer) {
-                if (!isSelection) d.a.money += prz;
+                if (!isSelection && prz > 0) {
+                    d.a.money += prz;
+                    log(`💰 ${tName} ${r}位の賞金 ${prz.toLocaleString()}円を獲得しました！ (残高: ${d.a.money.toLocaleString()}円)`);
+                }
                 
                 let tm = isSelection ? `選考会 ${r}位！` : `${tName} ${r}位！`;
                 if (!isSelection && prz > 0) tm += `<br>賞金 ${prz.toLocaleString()}円！`;
                 
                 if(d.res.recM) { tm = `${d.res.recM}<br>${tm}`; cEv=getRecEvent(d.res.recM); showToast(tm, "medal"); }
-                else if(!isSelection && r===1) { 
-                    showToast(tm,"medal"); cEv="win"; 
-                    if (tName === '国際大会') isWorldChamp = true;
-                }
+                else if(!isSelection && r===1) { showToast(tm,"medal"); cEv="win"; }
                 else if(!isSelection && r<=3) { showToast(tm,"medal"); cEv="med"; } 
                 else if(!isSelection && r<=8) { showToast(tm,"success"); cEv="over"; } 
                 else if(d.res.isPB) { showToast(`${tm}<br>★PB★`,"pb"); cEv="pb"; }
@@ -1376,12 +1351,10 @@
         }
         
         let isPlayerIn = pData.some(d => d.a.isPlayer);
-        let finalEv = cEv;
-
+        
         if (isSelection) {
             if (curQuals.includes(p)) {
-                finalEv = (cEv === "normal_effort" || cEv === "over" || cEv === "under") ? "qualified" : cEv;
-                upCoach(p.isInjured ? "inj" : finalEv, 5, tName.replace('選考','')); // 選考会用の大会名を渡す
+                upCoach(p.isInjured ? "inj" : "qualified", 5, tName.replace('選考',''));
             } else {
                 upCoach("not_qualified", 5, tName.replace('選考',''));
             }
@@ -1393,10 +1366,24 @@
             }
         }
 
-        if (isWorldChamp) {
+        // 世界優勝セレブレーション (全クリ判定)
+        if (!isSelection && tName === '国際大会' && pData.some(d => d.a.isPlayer && d.a.logs[d.a.logs.length-1].r === 1)) {
             triggerConfetti();
             setTimeout(() => {
-                showHelpModalCustom("🎉 世界一達成！", "国際大会での優勝おめでとうございます！これでこのシミュレーションの<b>全クリア</b>となります！<br><br>これからは真の限界である<strong class='text-red-600 text-lg'>世界記録(43.03秒未満)</strong>の更新を目指して、残りの競技生活を走り抜いてください！");
+                let pb = agents[pId].pb;
+                let desc = "国際大会での優勝おめでとうございます！これでこのシミュレーションの<b>全クリア</b>となります！<br><br>";
+                
+                if (pb >= 43.03) {
+                    desc += "これからは真の限界である<strong class='text-red-600 text-lg'>世界記録(43.03秒未満)</strong>の更新を目指して、残りの競技生活を走り抜いてください！<br><br>";
+                }
+                
+                desc += `<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-gray-700 text-left">
+                    <b>👤 開発者 ハルノスケより：</b><br>
+                    ハルノスケを世界最強まで育ててくれてありがとう！<br>
+                    現実のハルノスケも最後まで陸上頑張ります！<br>
+                    今度会った時に感想教えてね
+                </div>`;
+                showHelpModalCustom("🎉 世界一達成！", desc);
             }, 1000);
         }
 
@@ -1420,22 +1407,22 @@
         if (curQuals.includes(p)) {
             if (tName === '日本選手権') {
                 p.money += 30000;
-                log(`💌 家族から日本選手権出場のお祝い金として 30,000円 が届きました！`);
+                log(`💌 家族から日本選手権出場のお祝い金として 30,000円 が届きました！ (残高: ${p.money.toLocaleString()}円)`);
                 showToast("💌 家族からお祝い金 +30,000円", "success");
             }
 
             if (fee > 0) {
-                if (p.money < fee) {
-                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態）`);
-                } else {
-                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。`);
-                }
                 p.money -= fee;
+                if (p.money < 0) {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態） (残高: ${p.money.toLocaleString()}円)`);
+                } else {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
+                }
             }
             if (tName === '国際大会') {
                 let bonus = (Math.floor(Math.random() * 6) + 5) * 10000; // 5万〜10万
                 p.money += bonus;
-                log(`✈️ 国際大会出場ボーナス（日本陸連より）: ${bonus.toLocaleString()}円を獲得しました！`);
+                log(`✈️ 国際大会出場ボーナス（日本陸連より）: ${bonus.toLocaleString()}円を獲得しました！ (残高: ${p.money.toLocaleString()}円)`);
             }
         }
 
@@ -1537,7 +1524,7 @@
                         agents[pId].money += actualPrz; 
                         let msgText = myRun ? `上位入賞！(賞金+${actualPrz.toLocaleString()}円)` : `チーム入賞！(応援ボーナス+${actualPrz.toLocaleString()}円)`;
                         h += `<span class="success text-green-600 font-bold">${msgText}</span><br>`; 
-                        log(`💰 リレー${r}位入賞で、${myRun?'賞金':'応援ボーナス'} ${actualPrz.toLocaleString()}円を獲得しました！`);
+                        log(`💰 リレー${r}位入賞で、${myRun?'賞金':'応援ボーナス'} ${actualPrz.toLocaleString()}円を獲得しました！ (残高: ${agents[pId].money.toLocaleString()}円)`);
                     }
                 }
                 h += d.laps.map((l,li) => {
@@ -1563,6 +1550,7 @@
         let isPrizeMeet = !isWinter && getEl('input-prize-meet')?.checked;
         let p = agents[pId];
         let recM_player = null;
+        let oldAbility = p.ability;
 
         if (isPrizeMeet) {
             let qual = getValidQualRecord(p);
@@ -1577,7 +1565,7 @@
                 getEl('input-prize-meet').checked = false;
             } else {
                 p.money -= 10000;
-                log(`💸 賞金大会の参加費 10,000円を支払いました。`);
+                log(`💸 夏・グランプリの参加費 10,000円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
             }
         }
 
@@ -1639,16 +1627,19 @@
             log(`🏥 怪我のためグランプリを棄権しました...`);
         }
 
+        let diff = oldAbility - p.ability;
         let msg = isWinter ? `[冬完] ベース走力変動` : `[夏完] 記録会:${m}回 疲労:${p.fatigue.toFixed(1)}`;
+        msg += `<br>└ 走力: ${diff > 0 ? '-' : '+'}${Math.abs(diff).toFixed(2)}秒 (現在: ${p.ability.toFixed(2)}秒)`;
+
         if(p.isInjured) { 
-            msg+=` <span class="injury">※怪我発生</span>`; 
+            msg+=`<br><span class="injury">※怪我発生</span>`; 
             showToast("🏥 怪我発生","fail"); 
             upCoach("inj", p_e); 
         } else {
             if(!isWinter && m>0) {
                 let pbs = p.logs.slice(-m).filter(l=>l.pb);
                 msg+=`<br>└ ベスト: ${p.lastTime.toFixed(2)}秒 ${pbs.length?"<span class='highlight'>★PB!</span>":""}`;
-                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += ` <b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player), p_e); }
+                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += `<br><b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player), p_e); }
                 else if(pbs.length) { showToast("記録会<br>★PB更新★","pb"); upCoach("pb", p_e); } 
                 else upCoach("normal_effort", p_e);
             } else { 
