@@ -29,6 +29,7 @@
         .highlight { color: #f1c40f; font-weight: bold; }
         .injury { color: #e74c3c; font-weight: bold; }
         .success { color: #2ecc71; font-weight: bold;}
+        
         table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
         th { background: #2c3e50; color: white; position: sticky; top: 0; z-index: 10; }
@@ -64,17 +65,14 @@
 
         details > summary { list-style: none; outline: none; }
         details > summary::-webkit-details-marker { display: none; }
-
-        .confetti { position: absolute; width: 10px; height: 10px; opacity: 0.8; animation: fall linear forwards; pointer-events: none; z-index: 10000; }
     </style>
 
-    <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
+        // Firebase設定
         const firebaseConfig = {
             apiKey: "AIzaSyCcm0VxhPW-G4VDiMiXQQtjHAY1Vl25Zwc",
             authDomain: "ikuseiharunosuke.firebaseapp.com",
@@ -89,7 +87,6 @@
         let db, auth;
         try {
             const app = initializeApp(firebaseConfig);
-            const analytics = getAnalytics(app);
             auth = getAuth(app);
             db = getFirestore(app);
         } catch(e) {
@@ -133,12 +130,10 @@
             }
         };
     </script>
-    <!-- ▲▲▲ Firebase Online Ranking Setup ▲▲▲ -->
 </head>
 <body>
 <div id="toast-container"></div>
 
-<!-- ヘルプ・エージェントモーダル -->
 <div id="help-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeHelpModal()"></div>
 <div id="help-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg z-[9999] w-11/12 max-w-md hidden shadow-2xl">
     <h3 id="help-title" class="text-xl font-bold mb-2 text-gray-800"></h3>
@@ -157,7 +152,6 @@
     <div class="text-center"><button onclick="closeAgentModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold">閉じる</button></div>
 </div>
 
-<!-- ランキングモーダル -->
 <div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeRankingModal()"></div>
 <div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-5 rounded-lg z-[9999] w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto hidden shadow-2xl">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">🏆 殿堂入りランキング</h2>
@@ -173,7 +167,6 @@
     <div class="text-center mt-4"><button onclick="closeRankingModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold w-full">閉じる</button></div>
 </div>
 
-<!-- 優勝セレブレーションモーダル -->
 <div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[9998] hidden"></div>
 <div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400">
     <h2 class="text-4xl font-extrabold text-yellow-500 mb-4">👑 WORLD CHAMPION!</h2>
@@ -476,6 +469,30 @@
         if(window.initFirebaseAuth) window.initFirebaseAuth();
     });
 
+    function triggerConfetti() {
+        for(let i=0; i<100; i++){
+            let div = document.createElement('div');
+            div.style.position = 'fixed';
+            div.style.top = '-20px';
+            div.style.left = Math.random() * 100 + 'vw';
+            div.style.width = (Math.random()*10+5) + 'px';
+            div.style.height = (Math.random()*6+4) + 'px';
+            div.style.backgroundColor = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6'][Math.floor(Math.random()*5)];
+            div.style.zIndex = '99999';
+            div.style.animation = `fall ${Math.random()*2+2.5}s linear forwards`;
+            div.style.transform = `rotate(${Math.random()*360}deg)`;
+            document.body.appendChild(div);
+            setTimeout(()=>div.remove(), 4500);
+        }
+    }
+
+    function showHelpModalCustom(title, descHtml) {
+        getEl('help-title').innerText = title;
+        getEl('help-desc').innerHTML = descHtml;
+        getEl('help-modal-overlay').style.display = 'block';
+        getEl('help-modal').style.display = 'block';
+    }
+
     const getEl = id => document.getElementById(id);
     const randn = (mean, sd) => mean + sd * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * (1 - Math.random()));
     const fmt = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
@@ -520,10 +537,15 @@
     let athleteNamesPool = [];
 
     const getAthleteName = () => {
-        if (athleteNamesPool.length === 0) athleteNamesPool = [...ATHLETE_NAMES].sort(() => Math.random() - 0.5);
+        if (athleteNamesPool.length === 0) {
+            athleteNamesPool = [...ATHLETE_NAMES].sort(() => Math.random() - 0.5);
+        }
         return athleteNamesPool.pop();
     };
-    const getForeignName = () => FOREIGN_NAMES[Math.floor(Math.random() * FOREIGN_NAMES.length)];
+
+    const getForeignName = () => {
+        return FOREIGN_NAMES[Math.floor(Math.random() * FOREIGN_NAMES.length)];
+    }
 
     const SHOP = {
         care: {
@@ -538,7 +560,11 @@
         }
     };
     
-    let careLevel = 0, spikeLevel = 0, usedSpecialFood = false, currentPhaseTracker = '';
+    let careLevel = 0;
+    let spikeLevel = 0;
+    let usedSpecialFood = false;
+    let currentPhaseTracker = '';
+
     let agents = [], pId = 0, year = 1, phase = 'spring-sel', curTourney, curQuals = [], isRelay = false, animReq, raceData = [], rStart, rDone;
     let curRelayData = []; 
     let charts = {};
@@ -586,17 +612,14 @@
             let t = this.ability - spikeBuff + (this.isInjured ? 1.5 * pen : 0) + this.cond + fly;
             
             if(!isR) this.lastTime = t;
-            if (!isR && !this.isInjured) this.currentSeasonBest = Math.min(this.currentSeasonBest, t);
+            
+            if (!isR && !this.isInjured) {
+                this.currentSeasonBest = Math.min(this.currentSeasonBest, t);
+            }
 
             let isPB = !isR && !this.isInjured && t < this.pb, recM = null;
             if (isPB) { 
                 this.pb = t; 
-                if (this.isPlayer) {
-                    this.money += 20000; 
-                    window.totalEarnedMoney += 20000;
-                    log(`💰 PB更新ボーナス 20,000円を獲得！ (残高: ${this.money.toLocaleString()}円)`);
-                }
-                
                 let msg = null;
                 if (t < 43.03) msg = "🌍 世界新記録！";
                 else if (t < 44.44 && this.univ !== "海外") msg = "🇯🇵 日本新記録！";
@@ -605,11 +628,15 @@
                 if (msg && !this.recFlags[msg]) {
                     recM = msg; this.recFlags[msg] = true;
                     if (this.isPlayer) {
-                        let m = msg === "🌍 世界新記録！" ? 1000000 : msg === "🇯🇵 日本新記録！" ? 500000 : 200000;
-                        this.money += m;
-                        window.totalEarnedMoney += m;
-                        log(`💰 ${msg}ボーナス ${m.toLocaleString()}円を獲得！ (残高: ${this.money.toLocaleString()}円)`);
+                        let b = msg === "🌍 世界新記録！" ? 1000000 : msg === "🇯🇵 日本新記録！" ? 500000 : 200000;
+                        this.money += b;
+                        window.totalEarnedMoney += b;
+                        log(`💰 新記録達成ボーナス ${b.toLocaleString()}円を獲得しました！ (残高: ${this.money.toLocaleString()}円)`);
                     }
+                } else if (this.isPlayer) {
+                    this.money += 20000; 
+                    window.totalEarnedMoney += 20000;
+                    log(`💰 自己ベスト更新ボーナス 20,000円を獲得しました！ (残高: ${this.money.toLocaleString()}円)`);
                 }
             }
             let br = this.strat === "FRONT" ? [0.23,0.24,0.26,0.27] : this.strat === "BACK" ? [0.25,0.25,0.24,0.26] : [0.24,0.25,0.25,0.26];
@@ -630,7 +657,7 @@
         pb_long: ["長かったな。この1秒を削り出すのにどれだけ時間かけたか考えろ。","どん底から這い上がったな。ここから巻き返せ。","スランプ脱出か。腐らずに続けたことは評価してやる。"],
         under_1_2: ["なんだそのチキンレースは。金払って出場してる自覚を持て。","周りに飲まれて自分の走りを見失うとは。アマチュア以下だ。","プレッシャーに負けてどうする。プロの世界はもっと厳しいぞ。"],
         under_3_4: ["上級生がそのザマか。まだピーキングもできないのか。","大事な場面でこのタイム…。お前にはもう期待しない方がいいか。","情けない走りだ。後輩に示しがつかないだろうが。"],
-        over: ["条件が良かったな。地力を伸ばせ。","速い選手じゃなくて強い選手を目指せ。","運も実力のうちと言うが、たたまたまハマっただけだ。勘違いするな。"],
+        over: ["条件が良かったな。地力を伸ばせ。","速い選手じゃなくて強い選手を目指せ。","運も実力のうちと言うが、たまたまハマっただけだ。勘違いするな。"],
         
         win_春インカレ_1_2: ["下級生で春インカレ制覇とは恐れ入った。だが勝負の夏はこれからだぞ。","春から最高の滑り出しだ！賞金でしっかり自己投資しろよ。","鮮烈なインカレデビューだな。他大のマークが厳しくなるぞ。"],
         win_春インカレ_3_4: ["さすが上級生。チームに最高の勢いをもたらしてくれたな！","春インカレ優勝！これで今年一年の主導権を握ったな。","貫禄の勝利だ。このまま秋まで無敗で駆け抜けろ。"],
@@ -654,7 +681,7 @@
         
         win_国際大会_1_2: ["若くして世界を制するとは…お前の才能に限界はないのか。","世界一だ！！日本陸上界の新たな歴史がここから始まるぞ！","信じられん…本当に世界一になりやがった。最強の教え子だ。"],
         win_国際大会_3_4: ["世界一だ。お前の集大成としてこれ以上のものはない！","世界の頂点…お前と一緒に夢を見られて幸せだったよ。","全てはこの日のためだったんだな。世界王者、おめでとう！！"],
-        med_国際大会_1_2: ["世界大会でメダル！？日本陸上界の宝だな。","世界の表彰台に立つお前の姿、鳥肌が立ったよ。","世界に名前を轟かせたな。次は世界の頂点だ！"],
+        med_国際大会_1_2: ["世界大会でメダル！？日本陸上界の宝だな。","世界の表彰台に立つお前の姿、鳥肌が立ったよ。","世界に名前を轰かせたな。次は世界の頂点だ！"],
         med_国際大会_3_4: ["世界の表彰台に立つ姿を見られるとは…コーチ冥利に尽きるよ。","世界でメダル獲得！お前の努力が世界に認められたんだ。","最高の走りだった。世界トップクラスの称号を胸に刻め。"],
 
         win: ["つくばんざい！つくばんざい！つくつくつくつくつくばんざい！！！","完璧なレース展開だった。文句なしの優勝だ！","圧倒的な走りだったな。誰も前を走らせなかった、素晴らしい！"],
@@ -856,19 +883,12 @@
         phase = newPhase;
         window.phaseCount++;
         let p = agents[pId];
-        
         if (p && p.isActive) {
             if (['spring-sel', 'summer-prac', 'autumn-sel', 'winter'].includes(newPhase)) {
                 p.money += 30000;
                 window.totalEarnedMoney += 30000;
                 log(`💰 親からの仕送り 30,000円 が届きました！ (残高: ${p.money.toLocaleString()}円)`);
                 showToast("💰 仕送り +30,000円", "success");
-            }
-            if (newPhase === 'japan-champ' && getValidQualRecord(p) <= 46.30) {
-                p.money += 30000;
-                window.totalEarnedMoney += 30000;
-                log(`💰 家族から日本選手権出場のお祝い金 30,000円 をもらいました！ (残高: ${p.money.toLocaleString()}円)`);
-                showToast("💰 祝い金 +30,000円", "success");
             }
         }
         updateUI();
@@ -1180,21 +1200,469 @@
         });
     }
 
-    function showCelebration(time) {
-        createConfetti();
-        getEl('celeb-modal-overlay').style.display = 'block';
-        getEl('celeb-modal').style.display = 'block';
+    function showTournamentResult(tName, pData) {
+        document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); 
+        getEl('screen-tournament').classList.add('active');
+        getEl('tourney-title').innerText = `🏆 ${year}年 ${tName}`; 
         
-        let msg = `ハルノスケを世界最強まで育ててくれてありがとう！<br>現実のハルノスケも最後まで陸上頑張ります！<br>今度会った時に感想教えてね`;
-        if (time >= 43.03) {
-            msg += `<br><br><span class="text-sm text-gray-600">※次は世界記録(43.03)の更新を目指してね！</span>`;
+        let isSelection = tName.includes('選考');
+        let isKanto = tName.includes('インカレ') && !isSelection;
+        let univs = isKanto ? UNIVS.slice(0,5) : tName === '国際大会' ? ["海外","日本代表"] : UNIVS;
+        getEl('tourney-subtitle').innerText = `400m 決勝 (${pData.length}名) - タップで成績推移`;
+        
+        let cEv = "normal_effort";
+        let p = agents[pId];
+        
+        getEl('tourney-table-body').innerHTML = pData.map((d,i) => {
+            let r=i+1, rem="", cls = d.a.isPlayer ? "player-row" : d.a.univ===UNIVS[0] ? "teammate-row" : "";
+            let prz = getPrize(tName, r);
+            
+            if (!isSelection) {
+                if(r===1){rem="<span class='medal-gold'>🥇 優勝</span>";} 
+                else if(r===2){rem="<span class='medal-silver'>🥈 2位</span>";} 
+                else if(r===3){rem="<span class='medal-bronze'>🥉 3位</span>";} 
+                else if(r<=8){rem="🎖️ 入賞";}
+                
+                if (prz > 0) rem += `<br><span class="text-green-600 font-bold">+${prz.toLocaleString()}円</span>`;
+            } else {
+                if (curQuals.includes(d.a)) {
+                    rem += "<span class='success font-bold'>✅ 本戦出場</span>";
+                } else {
+                    rem += "<span class='text-gray-500'>❌ 落選</span>";
+                }
+            }
+            
+            if(d.res.recM) rem += `<br><b style="color:#e74c3c;font-size:12px">${d.res.recM}</b>`;
+            
+            d.a.logs.push({n:`${year}年 ${tName}`, t:d.res.time, pb:d.res.isPB, inj:d.a.isInjured, r});
+            
+            if(d.a.isPlayer) {
+                if (!isSelection && prz > 0) {
+                    d.a.money += prz;
+                    window.totalEarnedMoney += prz;
+                    log(`💰 ${tName} ${r}位の賞金 ${prz.toLocaleString()}円を獲得しました！ (残高: ${d.a.money.toLocaleString()}円)`);
+                }
+                
+                let tm = isSelection ? `選考会 ${r}位！` : `${tName} ${r}位！`;
+                if (!isSelection && prz > 0) tm += `<br>賞金 ${prz.toLocaleString()}円！`;
+                
+                if(d.res.recM) { tm = `${d.res.recM}<br>${tm}`; cEv=getRecEvent(d.res.recM); showToast(tm, "medal"); }
+                else if(!isSelection && r===1) { showToast(tm,"medal"); cEv="win"; }
+                else if(!isSelection && r<=3) { showToast(tm,"medal"); cEv="med"; } 
+                else if(!isSelection && r<=8) { showToast(tm,"success"); cEv="over"; } 
+                else if(d.res.isPB) { showToast(`${tm}<br>★PB★`,"pb"); cEv="pb"; }
+                else { showToast(tm,"info"); cEv="normal_effort"; }
+            }
+            
+            return `<tr class="clickable-row ${cls}" onclick="showAgentModal(${d.a.id})"><td>${r}</td><td>${d.a.univ}</td><td>${d.a.name}</td><td>${d.res.time.toFixed(2)}秒 ${d.res.isPB?"<b style='color:#f39c12'>★PB</b>":""}</td><td>${rem}</td></tr>`;
+        }).join('');
+        
+        let btn = getEl('tourney-next-btn');
+        if (isKanto) {
+            btn.innerText = "🔥 マイルリレーへ";
+            btn.onclick = executeRelay;
+        } else {
+            btn.innerText = isSelection ? "ダッシュボードへ戻る" : "⏭️ 次のシーズンへ";
+            btn.onclick = closeTournamentScreen;
         }
-        getEl('celeb-msg').innerHTML = msg;
+        
+        let isPlayerIn = pData.some(d => d.a.isPlayer);
+        
+        if (isSelection) {
+            if (curQuals.includes(p)) {
+                upCoach(p.isInjured ? "inj" : "qualified", 5, tName.replace('選考',''));
+            } else {
+                upCoach("not_qualified", 5, tName.replace('選考',''));
+            }
+        } else {
+            if (isPlayerIn) {
+                upCoach(p.isInjured ? "inj" : cEv, 5, tName);
+            } else {
+                upCoach("not_qualified", 5, tName);
+            }
+        }
+
+        if (!isSelection && tName === '国際大会' && pData.some(d => d.a.isPlayer && d.a.logs[d.a.logs.length-1].r === 1)) {
+            if (!hasClearedThisRun) {
+                hasClearedThisRun = true;
+                window.gameClearRTA = phaseCount;
+                window.clearTimeString = `${year}年目 秋`;
+                
+                triggerConfetti();
+                setTimeout(() => {
+                    let pb = agents[pId].pb;
+                    let desc = "国際大会での優勝おめでとうございます！これでこのシミュレーションの<b>全クリア</b>となります！<br><br>";
+                    
+                    if (pb >= 43.03) {
+                        desc += "これからは真の限界である<strong class='text-red-600 text-lg'>世界記録(43.03秒未満)</strong>の更新を目指して、残りの競技生活を走り抜いてください！<br><br>";
+                    }
+                    
+                    desc += `<div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-gray-700 text-left">
+                        <b>👤 開発者 ハルノスケより：</b><br>
+                        ハルノスケを世界最強まで育ててくれてありがとう！<br>
+                        現実のハルノスケも最後まで陸上頑張ります！<br>
+                        今度会った時に感想教えてね
+                    </div>`;
+                    showHelpModalCustom("🎉 世界一達成！", desc);
+                }, 1000);
+            }
+        }
+
+        recordHistory(`${year}年 ${tName}`);
     }
 
-    function closeCelebModal() {
-        getEl('celeb-modal-overlay').style.display = 'none';
-        getEl('celeb-modal').style.display = 'none';
+    function executeMain(tName, std) {
+        let fee = 0;
+        if (tName === '春インカレ' || tName === '秋インカレ') fee = 5000;
+        else if (tName === '日本選手権') fee = 20000;
+        else if (tName === '国際大会') fee = 0;
+
+        let p = agents[pId];
+        
+        if (tName === '日本選手権' || tName === '国際大会') {
+            agents.filter(a => a.grade === 5).forEach(a => a.qualifyingRecord = Math.min(a.pb, a.ability));
+            curQuals = agents.filter(a => a.isActive && getValidQualRecord(a) <= std);
+        }
+
+        if (curQuals.includes(p)) {
+            if (tName === '日本選手権') {
+                p.money += 30000;
+                window.totalEarnedMoney += 30000;
+                log(`💌 家族から日本選手権出場のお祝い金として 30,000円 が届きました！ (残高: ${p.money.toLocaleString()}円)`);
+                showToast("💌 家族からお祝い金 +30,000円", "success");
+            }
+
+            if (fee > 0) {
+                p.money -= fee;
+                if (p.money < 0) {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態） (残高: ${p.money.toLocaleString()}円)`);
+                } else {
+                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
+                }
+            }
+            if (tName === '国際大会') {
+                let bonus = (Math.floor(Math.random() * 6) + 5) * 10000; 
+                p.money += bonus;
+                window.totalEarnedMoney += bonus;
+                log(`✈️ 国際大会出場ボーナス（日本陸連より）: ${bonus.toLocaleString()}円を獲得しました！ (残高: ${p.money.toLocaleString()}円)`);
+            }
+        }
+
+        let isKanto = tName.includes('インカレ');
+        let univs = isKanto ? UNIVS.slice(0,5) : tName === '国際大会' ? ["海外", "実業団", ...UNIVS] : ["実業団", ...UNIVS];
+        
+        let pData = curQuals.filter(q=>univs.includes(q.univ)).map(q=>({a:q, res:q.runRace(1.2)}));
+        
+        if (tName === '国際大会') {
+            pData.forEach(d => { if(d.a.univ === '海外') d.res = d.a.runRace(1.0, false, -0.3); });
+        }
+
+        pData.forEach(d => {
+            let careEff = d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
+            d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - careEff));
+        });
+
+        if (pData.length > 8) {
+            pData.sort((a,b) => a.res.time - b.res.time);
+            let meIdx = pData.findIndex(d => d.a.isPlayer);
+            let final8 = pData.slice(0, 8);
+            if (meIdx >= 8 && curQuals.includes(p)) {
+                final8.pop();
+                final8.push(pData[meIdx]);
+            }
+            pData = final8;
+        }
+        
+        pData.sort(() => Math.random() - 0.5);
+        
+        curTourney = tName;
+        runAnim(`🏆 ${tName} 本戦`, pData, () => {
+            pData.sort((a,b)=>a.res.time-b.res.time);
+            showTournamentResult(tName, pData);
+        });
+    }
+
+    function skipTournament(tName, std, nextPhase) {
+        let entrants = agents.filter(a => a.isActive && getValidQualRecord(a) <= std);
+        entrants.forEach(a => {
+            let res = a.runRace(1.2);
+            a.logs.push({ n: `${year}年 ${tName}`, t: res.time, pb: res.isPB, inj: a.isInjured, r: "-" }); 
+            a.lastTime = res.time;
+        });
+        entrants.sort((a,b) => a.lastTime - b.lastTime);
+        entrants.forEach((a, i) => {
+            a.logs[a.logs.length - 1].r = i + 1;
+        });
+        
+        log(`📝 ${tName} は標準記録未達のためスキップしました。`);
+        setPhase(nextPhase);
+    }
+
+    const closeTournamentScreen = () => { 
+        if (curTourney === '春インカレ選考') { setPhase('spring-main'); }
+        else if (curTourney === '春インカレ') { setPhase('japan-champ'); }
+        else if (curTourney === '日本選手権') { setPhase('summer-prac'); }
+        else if (curTourney === '夏・グランプリ') { setPhase('autumn-sel'); }
+        else if (curTourney === '秋インカレ選考') { setPhase('autumn-main'); }
+        else if (curTourney === '秋インカレ') { setPhase('intl-champ'); }
+        else if (curTourney === '国際大会') { setPhase('winter'); }
+        else { setPhase('winter'); }
+    };
+
+    function executeRelay() {
+        isRelay = true; 
+        let rData = curRelayData.map(d => {
+            let tt = 0, laps = [], segs = [];
+            d.team.forEach((a,i) => { let res = a.runRace(1,true,i===0?0:-0.6); tt+=res.time; laps.push({a, t:res.time}); segs.push(tt); });
+            return { a:{isPlayer:d.pI!==-1, univ:d.u, name:d.u, idStr:d.pI!==-1?`あなた(${d.pI+1}走)`:d.u===UNIVS[0]?"自大学":d.u.substring(0,3)}, res:{time:tt, segs}, laps };
+        });
+
+        rData.forEach(d => {
+            d.laps.forEach(l => {
+                let careEff = l.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
+                l.a.fatigue = Math.min(10, l.a.fatigue + 1.0 * (1 - careEff));
+            });
+        });
+        
+        rData.sort(() => Math.random() - 0.5);
+        
+        runAnim(`🔥 ${curTourney} 4×400mR`, rData, () => { 
+            isRelay=false; 
+            document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); 
+            getEl('screen-relay').classList.add('active');
+            rData.sort((a,b)=>a.res.time-b.res.time); 
+            
+            let cEv="normal_effort";
+            getEl('relay-results-container').innerHTML = rData.map((d,i) => {
+                let r=i+1, isMy = d.a.univ===UNIVS[0], h = `<div class="relay-header">${r}位: ${d.a.univ} (${fmt(d.res.time)})</div>`;
+                if(isMy) { 
+                    let prz = r === 1 ? 30000 : r === 2 ? 20000 : r === 3 ? 10000 : 0;
+                    if(prz > 0) {
+                        let myRun = d.a.isPlayer;
+                        let actualPrz = myRun ? prz : prz / 10;
+                        agents[pId].money += actualPrz; 
+                        window.totalEarnedMoney += actualPrz;
+                        let msgText = myRun ? `上位入賞！(賞金+${actualPrz.toLocaleString()}円)` : `チーム入賞！(応援ボーナス+${actualPrz.toLocaleString()}円)`;
+                        h += `<span class="success text-green-600 font-bold">${msgText}</span><br>`; 
+                        log(`💰 リレー${r}位入賞で、${myRun?'賞金':'応援ボーナス'} ${actualPrz.toLocaleString()}円を獲得しました！ (残高: ${agents[pId].money.toLocaleString()}円)`);
+                    }
+                }
+                h += d.laps.map((l,li) => {
+                    let hl = ""; 
+                    if(l.a.isPlayer) { 
+                        agents[pId].logs.push({n:`${year}年 ${curTourney} R`, t:l.t, pb:false, inj:false, r}); 
+                        if(l.t < agents[pId].pb) { hl="<b class='success'>🔼好タイム!</b>"; cEv="relay"; } 
+                    }
+                    return `<div class="mb-1"><b>${li+1}走:</b> <span class="clickable-row text-blue-600 underline" onclick="showAgentModal(${l.a.id})">${l.a.name}</span> - ${l.t.toFixed(2)}秒 ${hl}</div>`;
+                }).join(''); return `<div class="relay-box ${isMy?'relay-mine':''}">${h}</div>`;
+            }).join('');
+            
+            if(rData.some(d=>d.a.isPlayer)) {
+                upCoach(cEv, 5, curTourney);
+            } else {
+                upCoach("not_qualified", 5, curTourney);
+            }
+        });
+    }
+
+    function executePractice(isWinter) {
+        let p_e = parseFloat(getEl(`input-${isWinter?'winter':'summer'}-e`)?.value || 6.0), m = isWinter ? 0 : parseInt(getEl('input-summer-m')?.value || 2);
+        let isPrizeMeet = !isWinter && getEl('input-prize-meet')?.checked;
+        let p = agents[pId];
+        let recM_player = null;
+        let oldAbility = p.ability;
+
+        if (isPrizeMeet) {
+            let qual = getValidQualRecord(p);
+            if (qual > 47.00) {
+                showToast("標準(47.00秒)未達", "fail");
+                log(`❌ グランプリの参加標準記録(47.00秒)に達していないため、出場を断念しました。(資格記録: ${qual.toFixed(2)}秒)`);
+                isPrizeMeet = false;
+                getEl('input-prize-meet').checked = false;
+            } else if (p.money < 10000) {
+                showToast("資金不足で出場不可", "fail");
+                isPrizeMeet = false;
+                getEl('input-prize-meet').checked = false;
+            } else {
+                p.money -= 10000;
+                log(`💸 夏・グランプリの参加費 10,000円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
+            }
+        }
+
+        let careEff = SHOP.care.effects[careLevel] || 0;
+
+        agents.filter(a=>a.isActive).forEach(a => {
+            let e = a.isPlayer ? p_e : (5 + Math.random()*4), ai_m = isWinter||a.isPlayer ? m : Math.floor(Math.random()*3)+1;
+            let fat_gain = (isWinter ? 0.6 * e : 0.5 * e + 0.6 * ai_m);
+            if (a.isPlayer) fat_gain *= (1 - careEff);
+
+            a.fatigue = Math.min(10, a.fatigue*(isWinter?0.5:0.3) + fat_gain);
+            a.isInjured = Math.random() < Math.min(0.9, Math.pow(a.fatigue/10,2)*(isWinter?0.4:0.5));
+            
+            if (a.isPlayer && a.isInjured) window.injuryCount++;
+
+            let sc = a.ability < 44.0 ? 0.1 : a.ability < 45.0 ? 0.3 : a.ability < 46.0 ? 0.6 : a.ability < 47.0 ? 0.8 : 1.0;
+            let d = randn(((0.05 * e - 0.20)) * sc, isWinter ? 0.4 : 0.2); 
+            a.ability -= a.isInjured ? Math.min(0, d) : d;
+            
+            if(!isWinter && !a.isInjured) {
+                let best = 99;
+                for(let i=0;i<ai_m;i++) {
+                    let res = a.runRace();
+                    if(res.recM && a.isPlayer) recM_player = res.recM;
+                    a.logs.push({n:`${year}年 夏記録会`, t:res.time, pb:res.isPB, inj:false, r:"-"}); 
+                    if(res.time<best) best=res.time;
+                }
+                if(ai_m>0) a.lastTime = best;
+            }
+        });
+        
+        if (isPrizeMeet && !p.isInjured) {
+            curTourney = '夏・グランプリ';
+            let pData = agents.filter(a=>a.isActive && (a.univ === '実業団' || a.isPlayer)).map(a => ({a, res: a.runRace(1, false, -0.2)}));
+            let topStudents = agents.filter(a=>a.isActive && !a.isPlayer && a.grade < 5 && a.ability < 46.5).map(a => ({a, res: a.runRace(1, false, -0.2)}));
+            pData = pData.concat(topStudents);
+
+            pData.forEach(d => {
+                let currentCareEff = d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
+                d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - currentCareEff));
+            });
+
+            pData.sort((a,b) => a.res.time - b.res.time);
+            
+            let meIdx = pData.findIndex(d => d.a.isPlayer);
+            let final8 = pData.slice(0, 8);
+            if (!final8.find(d => d.a.isPlayer)) {
+                final8.pop();
+                final8.push(pData[meIdx]);
+            }
+            final8.sort(() => Math.random() - 0.5);
+            
+            runAnim(`💸 夏・グランプリ`, final8, () => {
+                final8.sort((a,b)=>a.res.time-b.res.time);
+                showTournamentResult('夏・グランプリ', final8); 
+            });
+            return; 
+        } else if (isPrizeMeet && p.isInjured) {
+            log(`🏥 怪我のためグランプリを棄権しました...`);
+        }
+
+        let diff = oldAbility - p.ability;
+        let msg = isWinter ? `[冬完] ベース走力変動` : `[夏完] 記録会:${m}回 疲労:${p.fatigue.toFixed(1)}`;
+        msg += `<br>└ 走力: ${diff > 0 ? '-' : '+'}${Math.abs(diff).toFixed(2)}秒 (現在: ${p.ability.toFixed(2)}秒)`;
+
+        if(p.isInjured) { 
+            msg+=`<br><span class="injury">※怪我発生</span>`; 
+            showToast("🏥 怪我発生","fail"); 
+            upCoach("inj", p_e); 
+        } else {
+            if(!isWinter && m>0) {
+                let pbs = p.logs.slice(-m).filter(l=>l.pb);
+                msg+=`<br>└ ベスト: ${p.lastTime.toFixed(2)}秒 ${pbs.length?"<span class='highlight'>★PB!</span>":""}`;
+                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += `<br><b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player), p_e); }
+                else if(pbs.length) { showToast("記録会<br>★PB更新★","pb"); upCoach("pb", p_e); } 
+                else upCoach("normal_effort", p_e);
+            } else { 
+                showToast(isWinter?"⛄️ 冬季完了":"☀️ 練習完了"); 
+                upCoach("normal_effort", p_e); 
+            }
+        }
+        log(msg); 
+        
+        if(isWinter) { 
+            recordHistory(`${year}年冬`); 
+            year++; 
+            
+            let retiring = [];
+            let incoming = [];
+            
+            agents.filter(a => a.isActive).forEach(a => {
+                if (a.grade === 4) {
+                    a.isActive = false; 
+                    if (a.univ === UNIVS[0]) retiring.push(a);
+                } else if (a.grade < 4) {
+                    a.grade++;
+                    a.qualifyingRecord = a.currentSeasonBest < 99.0 ? a.currentSeasonBest : 99.99;
+                    a.currentSeasonBest = 99.99; 
+                }
+            });
+
+            if (year <= 4) {
+                UNIVS.forEach(u => {
+                    for (let i = 0; i < 3; i++) {
+                        let pb = Math.max(44.5, randn(48.0, 0.912)); 
+                        let newId = agents.length;
+                        if (u === UNIVS[0]) {
+                            myUnivIdCounter++;
+                            newId = myUnivIdCounter;
+                        }
+                        let a = new Agent(newId, pb, false, u, "EVEN", getAthleteName());
+                        a.grade = 1;
+                        agents.push(a);
+                        if (u === UNIVS[0]) incoming.push(a);
+                    }
+                });
+            }
+
+            let nyHtml = `<div class="mb-2"><strong class="text-red-600">🎓 卒業生 (${retiring.length}名)</strong><br>`;
+            retiring.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (最終PB: ${a.pb.toFixed(2)}秒 / 資金: ${a.money?a.money.toLocaleString():0}円)</span><br>`; });
+            nyHtml += `</div>`;
+            
+            if (year <= 4) {
+                nyHtml += `<div><strong class="text-blue-600">✨ 新入生 (${incoming.length}名)</strong><br>`;
+                incoming.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (初期PB: ${a.pb.toFixed(2)}秒)</span><br>`; });
+                nyHtml += `</div>`;
+            } else {
+                nyHtml += `<div class="mt-4 text-center font-bold text-lg text-gray-800">4年間の競技生活が終了しました！</div>`;
+            }
+            
+            let nyEl = getEl('new-year-content');
+            if(nyEl) nyEl.innerHTML = nyHtml;
+
+            let btnNewYear = getEl('btn-new-year');
+            if(btnNewYear) {
+                btnNewYear.innerText = year <= 4 ? "新シーズンを開始する" : "最終結果を見る";
+            }
+            
+            setPhase('new-year');
+        } else { 
+            setPhase('autumn-sel');
+        }
+    }
+
+    function startNewYear() {
+        if (year > 4) {
+            showEnd();
+        } else {
+            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>${year}年目開始。</strong></div>`);
+            setPhase('spring-sel');
+        }
+    }
+
+    function showAgentModal(id) {
+        let a = agents.find(ag => ag.id === id);
+        if (!a) return;
+        getEl('modal-agent-name').innerText = `📈 記録推移: ${a.name} ${a.univ !== UNIVS[0] ? `(${a.univ})` : ''} ${a.isActive?'':'(引退)'}`;
+        getEl('agent-modal-overlay').style.display = 'block';
+        getEl('agent-modal').style.display = 'block';
+
+        if (modalChart) modalChart.destroy();
+        let pc = a.logs.map(l => l.pb ? '#f39c12' : '#3498db');
+        modalChart = new Chart(getEl('modal-race-chart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: a.logs.map(l => l.n),
+                datasets: [{
+                    label: '試合タイム (秒)', data: a.logs.map(l => l.t), borderColor: '#bdc3c7', backgroundColor: '#3498db', pointBackgroundColor: pc, pointBorderColor: pc, pointRadius: a.logs.map(l => l.pb ? 8 : 5), tension: 0.1, borderWidth: 2
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { reverse: true, title: { display: true, text: 'タイム (秒)' } } } }
+        });
+    }
+
+    function closeAgentModal() {
+        if(getEl('agent-modal-overlay')) getEl('agent-modal-overlay').style.display = 'none';
+        if(getEl('agent-modal')) getEl('agent-modal').style.display = 'none';
     }
 
     function openRankingModal() {
@@ -1309,444 +1777,6 @@
         getEl('ranking-content').innerHTML = html;
     }
 
-    function showTournamentResult(tName, pData) {
-        document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); 
-        getEl('screen-tournament').classList.add('active');
-        getEl('tourney-title').innerText = `🏆 ${year}年 ${tName}`; 
-        
-        let isSelection = tName.includes('選考');
-        let isKanto = tName.includes('インカレ') && !isSelection;
-        let univs = isKanto ? UNIVS.slice(0,5) : tName === '国際大会' ? ["海外","日本代表"] : UNIVS;
-        getEl('tourney-subtitle').innerText = `400m 決勝 (${pData.length}名) - タップで成績推移`;
-        
-        let cEv = "normal_effort";
-        let p = agents[pId];
-        
-        getEl('tourney-table-body').innerHTML = pData.map((d,i) => {
-            let r=i+1, rem="", cls = d.a.isPlayer ? "player-row" : d.a.univ===UNIVS[0] ? "teammate-row" : "";
-            let prz = getPrize(tName, r);
-            
-            if (!isSelection) {
-                if(r===1){rem="<span class='medal-gold'>🥇 優勝</span>";} 
-                else if(r===2){rem="<span class='medal-silver'>🥈 2位</span>";} 
-                else if(r===3){rem="<span class='medal-bronze'>🥉 3位</span>";} 
-                else if(r<=8){rem="🎖️ 入賞";}
-                
-                if (prz > 0) rem += `<br><span class="text-green-600 font-bold">+${prz.toLocaleString()}円</span>`;
-            } else {
-                if (curQuals.includes(d.a)) {
-                    rem += "<span class='success font-bold'>✅ 本戦出場</span>";
-                } else {
-                    rem += "<span class='text-gray-500'>❌ 落選</span>";
-                }
-            }
-            
-            if(d.res.recM) rem += `<br><b style="color:#e74c3c;font-size:12px">${d.res.recM}</b>`;
-            
-            d.a.logs.push({n:`${year}年 ${tName}`, t:d.res.time, pb:d.res.isPB, inj:d.a.isInjured, r});
-            
-            if(d.a.isPlayer) {
-                if (!isSelection) {
-                    d.a.money += prz;
-                    window.totalEarnedMoney += prz;
-                }
-                
-                let tm = isSelection ? `選考会 ${r}位！` : `${tName} ${r}位！`;
-                if (!isSelection && prz > 0) tm += `<br>賞金 ${prz.toLocaleString()}円！`;
-                
-                if(d.res.recM) { tm = `${d.res.recM}<br>${tm}`; cEv=getRecEvent(d.res.recM); showToast(tm, "medal"); }
-                else if(!isSelection && r===1) { showToast(tm,"medal"); cEv="win"; }
-                else if(!isSelection && r<=3) { showToast(tm,"medal"); cEv="med"; } 
-                else if(!isSelection && r<=8) { showToast(tm,"success"); cEv="over"; } 
-                else if(d.res.isPB) { showToast(`${tm}<br>★PB★`,"pb"); cEv="pb"; }
-                else { showToast(tm,"info"); cEv="normal_effort"; }
-            }
-            
-            return `<tr class="clickable-row ${cls}" onclick="showAgentModal(${d.a.id})"><td>${r}</td><td>${d.a.univ}</td><td>${d.a.name}</td><td>${d.res.time.toFixed(2)}秒 ${d.res.isPB?"<b style='color:#f39c12'>★PB</b>":""}</td><td>${rem}</td></tr>`;
-        }).join('');
-        
-        let btn = getEl('tourney-next-btn');
-        if (isKanto) {
-            btn.innerText = "🔥 マイルリレーへ";
-            btn.onclick = executeRelay;
-        } else {
-            btn.innerText = isSelection ? "ダッシュボードへ戻る" : "⏭️ 次のシーズンへ";
-            btn.onclick = closeTournamentScreen;
-        }
-        
-        let isPlayerIn = pData.some(d => d.a.isPlayer);
-        
-        if (isSelection) {
-            if (curQuals.includes(p)) {
-                let finalEv = (cEv === "normal_effort" || cEv === "over" || cEv === "under" || cEv === "pb") ? "qualified" : cEv;
-                upCoach(p.isInjured ? "inj" : finalEv);
-            } else {
-                upCoach("not_qualified");
-            }
-        } else {
-            if (isPlayerIn) {
-                upCoach(p.isInjured ? "inj" : cEv);
-            } else {
-                upCoach("not_qualified");
-            }
-        }
-
-        if (!isSelection && tName === '国際大会') {
-            let myResult = pData.find(d => d.a.isPlayer);
-            if (myResult && pData.indexOf(myResult) === 0) {
-                if (!hasClearedThisRun) {
-                    hasClearedThisRun = true;
-                    window.gameClearRTA = phaseCount;
-                    window.clearTimeString = `${year}年目 秋`;
-                    setTimeout(() => { showCelebration(myResult.res.time); }, 1000);
-                }
-            }
-        }
-
-        recordHistory(`${year}年 ${tName}`);
-    }
-
-    function executeMain(tName, std) {
-        let fee = 0;
-        if (tName === '春インカレ' || tName === '秋インカレ') fee = 5000;
-        else if (tName === '日本選手権') fee = 20000;
-        else if (tName === '国際大会') fee = 0;
-
-        let p = agents[pId];
-        
-        if (tName === '日本選手権' || tName === '国際大会') {
-            agents.filter(a => a.grade === 5).forEach(a => a.qualifyingRecord = Math.min(a.pb, a.ability));
-            curQuals = agents.filter(a => a.isActive && getValidQualRecord(a) <= std);
-        }
-
-        if (curQuals.includes(p)) {
-            if (fee > 0) {
-                if (p.money < fee) {
-                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。（借金状態） (残高: ${(p.money - fee).toLocaleString()}円)`);
-                } else {
-                    log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。 (残高: ${(p.money - fee).toLocaleString()}円)`);
-                }
-                p.money -= fee;
-            }
-            if (tName === '国際大会') {
-                let bonus = (Math.floor(Math.random() * 6) + 5) * 10000; 
-                p.money += bonus;
-                window.totalEarnedMoney += bonus;
-                log(`✈️ 国際大会出場ボーナス（日本陸連より）: ${bonus.toLocaleString()}円を獲得しました！ (残高: ${p.money.toLocaleString()}円)`);
-            }
-        }
-
-        let isKanto = tName.includes('インカレ');
-        let univs = isKanto ? UNIVS.slice(0,5) : tName === '国際大会' ? ["海外", "実業団", ...UNIVS] : ["実業団", ...UNIVS];
-        
-        let pData = curQuals.filter(q=>univs.includes(q.univ)).map(q=>({a:q, res:q.runRace(1.2)}));
-        
-        if (tName === '国際大会') {
-            pData.forEach(d => { if(d.a.univ === '海外') d.res = d.a.runRace(1.0, false, -0.3); });
-        }
-
-        pData.forEach(d => {
-            let careEff = d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
-            d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - careEff));
-        });
-
-        if (pData.length > 8) {
-            pData.sort((a,b) => a.res.time - b.res.time);
-            let meIdx = pData.findIndex(d => d.a.isPlayer);
-            let final8 = pData.slice(0, 8);
-            if (meIdx >= 8 && curQuals.includes(p)) {
-                final8.pop();
-                final8.push(pData[meIdx]);
-            }
-            pData = final8;
-        }
-        
-        pData.sort(() => Math.random() - 0.5);
-        
-        curTourney = tName;
-        runAnim(`🏆 ${tName} 本戦`, pData, () => {
-            pData.sort((a,b)=>a.res.time-b.res.time);
-            showTournamentResult(tName, pData);
-        });
-    }
-
-    function skipTournament(tName, std, nextPhase) {
-        let entrants = agents.filter(a => a.isActive && getValidQualRecord(a) <= std);
-        entrants.forEach(a => {
-            let res = a.runRace(1.2);
-            a.logs.push({ n: `${year}年 ${tName}`, t: res.time, pb: res.isPB, inj: a.isInjured, r: "-" }); 
-            a.lastTime = res.time;
-        });
-        entrants.sort((a,b) => a.lastTime - b.lastTime);
-        entrants.forEach((a, i) => {
-            a.logs[a.logs.length - 1].r = i + 1;
-        });
-        
-        log(`📝 ${tName} は標準記録未達のためスキップしました。`);
-        setPhase(nextPhase);
-    }
-
-    const closeTournamentScreen = () => { 
-        if (curTourney === '春インカレ選考') { setPhase('spring-main'); }
-        else if (curTourney === '春インカレ') { setPhase('japan-champ'); }
-        else if (curTourney === '日本選手権') { setPhase('summer-prac'); }
-        else if (curTourney === '夏・グランプリ') { setPhase('autumn-sel'); }
-        else if (curTourney === '秋インカレ選考') { setPhase('autumn-main'); }
-        else if (curTourney === '秋インカレ') { setPhase('intl-champ'); }
-        else if (curTourney === '国際大会') { setPhase('winter'); }
-        else { setPhase('winter'); }
-    };
-
-    function executeRelay() {
-        isRelay = true; 
-        let rData = curRelayData.map(d => {
-            let tt = 0, laps = [], segs = [];
-            d.team.forEach((a,i) => { let res = a.runRace(1,true,i===0?0:-0.6); tt+=res.time; laps.push({a, t:res.time}); segs.push(tt); });
-            return { a:{isPlayer:d.pI!==-1, univ:d.u, name:d.u, idStr:d.pI!==-1?`あなた(${d.pI+1}走)`:d.u===UNIVS[0]?"自大学":d.u.substring(0,3)}, res:{time:tt, segs}, laps, isMyPlayerInRelay: d.pI!==-1 };
-        });
-
-        rData.forEach(d => {
-            d.laps.forEach(l => {
-                let careEff = l.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
-                l.a.fatigue = Math.min(10, l.a.fatigue + 1.0 * (1 - careEff));
-            });
-        });
-        
-        rData.sort(() => Math.random() - 0.5);
-        
-        runAnim(`🔥 ${curTourney} 4×400mR`, rData, () => { 
-            isRelay=false; 
-            document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); 
-            getEl('screen-relay').classList.add('active');
-            rData.sort((a,b)=>a.res.time-b.res.time); 
-            
-            let cEv="normal_effort";
-            getEl('relay-results-container').innerHTML = rData.map((d,i) => {
-                let r=i+1, isMy = d.a.univ===UNIVS[0], h = `<div class="relay-header">${r}位: ${d.a.univ} (${fmt(d.res.time)})</div>`;
-                if(isMy) { 
-                    let prz = r === 1 ? 30000 : r === 2 ? 20000 : r === 3 ? 10000 : 0;
-                    if (!d.isMyPlayerInRelay) prz = Math.floor(prz / 10);
-
-                    if(prz > 0) {
-                        agents[pId].money += prz; 
-                        window.totalEarnedMoney += prz;
-                        let msgTitle = d.isMyPlayerInRelay ? "上位入賞" : "応援ボーナス";
-                        h += `<span class="success text-green-600 font-bold">${msgTitle}！(賞金+${prz.toLocaleString()}円)</span><br>`; 
-                        log(`💰 リレー${r}位入賞（${msgTitle}）で、賞金 ${prz.toLocaleString()}円を獲得しました！ (残高: ${agents[pId].money.toLocaleString()}円)`);
-                    }
-                }
-                h += d.laps.map((l,li) => {
-                    let hl = ""; 
-                    if(l.a.isPlayer) { 
-                        agents[pId].logs.push({n:`${year}年 ${curTourney} R`, t:l.t, pb:false, inj:false, r}); 
-                        if(l.t < agents[pId].pb) { hl="<b class='success'>🔼好タイム!</b>"; cEv="relay"; } 
-                    }
-                    return `<div class="mb-1"><b>${li+1}走:</b> <span class="clickable-row text-blue-600 underline" onclick="showAgentModal(${l.a.id})">${l.a.name}</span> - ${l.t.toFixed(2)}秒 ${hl}</div>`;
-                }).join(''); return `<div class="relay-box ${isMy?'relay-mine':''}">${h}</div>`;
-            }).join('');
-            
-            if(rData.some(d=>d.isMyPlayerInRelay)) {
-                upCoach(cEv);
-            } else {
-                upCoach("not_qualified");
-            }
-        });
-    }
-
-    function executePractice(isWinter) {
-        let p_e = parseFloat(getEl(`input-${isWinter?'winter':'summer'}-e`)?.value || 6.0), m = isWinter ? 0 : parseInt(getEl('input-summer-m')?.value || 2);
-        let isPrizeMeet = !isWinter && getEl('input-prize-meet')?.checked;
-        let p = agents[pId];
-        let recM_player = null;
-        let p_start_ability = p.ability;
-
-        if (isPrizeMeet && p.money < 10000) {
-            showToast("資金不足で大会に出場できません！", "fail");
-            isPrizeMeet = false;
-            getEl('input-prize-meet').checked = false;
-        }
-
-        if (isPrizeMeet) {
-            p.money -= 10000;
-            log(`💸 賞金大会の参加費 10,000円を支払いました。 (残高: ${p.money.toLocaleString()}円)`);
-        }
-
-        let careEff = SHOP.care.effects[careLevel] || 0;
-
-        agents.filter(a=>a.isActive).forEach(a => {
-            let e = a.isPlayer ? p_e : (5 + Math.random()*4), ai_m = isWinter||a.isPlayer ? m : Math.floor(Math.random()*3)+1;
-            let fat_gain = (isWinter ? 0.6 * e : 0.5 * e + 0.6 * ai_m);
-            if (a.isPlayer) fat_gain *= (1 - careEff);
-
-            a.fatigue = Math.min(10, a.fatigue*(isWinter?0.5:0.3) + fat_gain);
-            a.isInjured = Math.random() < Math.min(0.9, Math.pow(a.fatigue/10,2)*(isWinter?0.4:0.5));
-            
-            if (a.isPlayer && a.isInjured) window.injuryCount++;
-
-            let sc = a.ability < 44.0 ? 0.1 : a.ability < 45.0 ? 0.3 : a.ability < 46.0 ? 0.6 : a.ability < 47.0 ? 0.8 : 1.0;
-            let d = randn(((0.05 * e - 0.20)) * sc, isWinter ? 0.4 : 0.2); 
-            a.ability -= a.isInjured ? Math.min(0, d) : d;
-            
-            if(!isWinter && !a.isInjured) {
-                let best = 99;
-                for(let i=0;i<ai_m;i++) {
-                    let res = a.runRace();
-                    if(res.recM && a.isPlayer) recM_player = res.recM;
-                    a.logs.push({n:`${year}年 夏記録会`, t:res.time, pb:res.isPB, inj:false, r:"-"}); 
-                    if(res.time<best) best=res.time;
-                }
-                if(ai_m>0) a.lastTime = best;
-            }
-        });
-        
-        if (isPrizeMeet && !p.isInjured) {
-            curTourney = '夏・グランプリ';
-            let pData = agents.filter(a=>a.isActive && (a.univ === '実業団' || a.isPlayer)).map(a => ({a, res: a.runRace(1, false, -0.2)}));
-            let topStudents = agents.filter(a=>a.isActive && !a.isPlayer && a.grade < 5 && a.ability < 46.5).map(a => ({a, res: a.runRace(1, false, -0.2)}));
-            pData = pData.concat(topStudents);
-
-            pData.forEach(d => {
-                let currentCareEff = d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0;
-                d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - currentCareEff));
-            });
-
-            pData.sort((a,b) => a.res.time - b.res.time);
-            
-            let meIdx = pData.findIndex(d => d.a.isPlayer);
-            let final8 = pData.slice(0, 8);
-            if (!final8.find(d => d.a.isPlayer)) {
-                final8.pop();
-                final8.push(pData[meIdx]);
-            }
-            final8.sort(() => Math.random() - 0.5);
-            
-            runAnim(`💸 夏・グランプリ`, final8, () => {
-                final8.sort((a,b)=>a.res.time-b.res.time);
-                showTournamentResult('夏・グランプリ', final8); 
-            });
-            return; 
-        } else if (isPrizeMeet && p.isInjured) {
-            log(`🏥 怪我のためグランプリを棄権しました...`);
-        }
-
-        let p_end_ability = p.ability;
-        let diffStr = (p_start_ability - p_end_ability) > 0 ? `-${(p_start_ability - p_end_ability).toFixed(2)}秒` : `+${(p_end_ability - p_start_ability).toFixed(2)}秒`;
-
-        let msg = isWinter ? `[冬完] 走力変動: ${diffStr} (現在: ${p.ability.toFixed(2)})` : `[夏完] 走力変動: ${diffStr} / 記録会:${m}回 疲労:${p.fatigue.toFixed(1)}`;
-        if(p.isInjured) { 
-            msg+=` <span class="injury">※怪我発生</span>`; 
-            showToast("🏥 怪我発生","fail"); 
-            upCoach("inj", p_e); 
-        } else {
-            if(!isWinter && m>0) {
-                let pbs = p.logs.slice(-m).filter(l=>l.pb);
-                msg+=`<br>└ ベスト: ${p.lastTime.toFixed(2)}秒 ${pbs.length?"<span class='highlight'>★PB!</span>":""}`;
-                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += ` <b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player), p_e); }
-                else if(pbs.length) { showToast("記録会<br>★PB更新★","pb"); upCoach("pb", p_e); } 
-                else upCoach("normal_effort", p_e);
-            } else { 
-                showToast(isWinter?"⛄️ 冬季完了":"☀️ 練習完了"); 
-                upCoach("normal_effort", p_e); 
-            }
-        }
-        log(msg); 
-        
-        if(isWinter) { 
-            recordHistory(`${year}年冬`); 
-            year++; 
-            
-            let retiring = [];
-            let incoming = [];
-            
-            agents.filter(a => a.isActive).forEach(a => {
-                if (a.grade === 4) {
-                    a.isActive = false; // 引退
-                    if (a.univ === UNIVS[0]) retiring.push(a);
-                } else if (a.grade < 4) {
-                    a.grade++;
-                    a.qualifyingRecord = a.currentSeasonBest < 99.0 ? a.currentSeasonBest : 99.99;
-                    a.currentSeasonBest = 99.99; 
-                }
-            });
-
-            if (year <= 4) {
-                UNIVS.forEach(u => {
-                    for (let i = 0; i < 3; i++) {
-                        let pb = Math.max(44.5, randn(48.0, 0.912)); 
-                        let newId = agents.length;
-                        if (u === UNIVS[0]) {
-                            myUnivIdCounter++;
-                            newId = myUnivIdCounter;
-                        }
-                        let a = new Agent(newId, pb, false, u, "EVEN", getAthleteName());
-                        a.grade = 1;
-                        agents.push(a);
-                        if (u === UNIVS[0]) incoming.push(a);
-                    }
-                });
-            }
-
-            let nyHtml = `<div class="mb-2"><strong class="text-red-600">🎓 卒業生 (${retiring.length}名)</strong><br>`;
-            retiring.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (最終PB: ${a.pb.toFixed(2)}秒 / 資金: ${a.money?a.money.toLocaleString():0}円)</span><br>`; });
-            nyHtml += `</div>`;
-            
-            if (year <= 4) {
-                nyHtml += `<div><strong class="text-blue-600">✨ 新入生 (${incoming.length}名)</strong><br>`;
-                incoming.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (初期PB: ${a.pb.toFixed(2)}秒)</span><br>`; });
-                nyHtml += `</div>`;
-            } else {
-                nyHtml += `<div class="mt-4 text-center font-bold text-lg text-gray-800">4年間の競技生活が終了しました！</div>`;
-            }
-            
-            let nyEl = getEl('new-year-content');
-            if(nyEl) nyEl.innerHTML = nyHtml;
-
-            let btnNewYear = getEl('btn-new-year');
-            if(btnNewYear) {
-                btnNewYear.innerText = year <= 4 ? "新シーズンを開始する" : "最終結果を見る";
-            }
-            
-            setPhase('new-year');
-        } else { 
-            setPhase('autumn-sel');
-        }
-    }
-
-    function startNewYear() {
-        if (year > 4) {
-            showEnd();
-        } else {
-            getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>${year}年目開始。</strong></div>`);
-            setPhase('spring-sel');
-        }
-    }
-
-    function showAgentModal(id) {
-        let a = agents.find(ag => ag.id === id);
-        if (!a) return;
-        getEl('modal-agent-name').innerText = `📈 記録推移: ${a.name} ${a.univ !== UNIVS[0] ? `(${a.univ})` : ''} ${a.isActive?'':'(引退)'}`;
-        getEl('agent-modal-overlay').style.display = 'block';
-        getEl('agent-modal').style.display = 'block';
-
-        if (modalChart) modalChart.destroy();
-        let pc = a.logs.map(l => l.pb ? '#f39c12' : '#3498db');
-        modalChart = new Chart(getEl('modal-race-chart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: a.logs.map(l => l.n),
-                datasets: [{
-                    label: '試合タイム (秒)', data: a.logs.map(l => l.t), borderColor: '#bdc3c7', backgroundColor: '#3498db', pointBackgroundColor: pc, pointBorderColor: pc, pointRadius: a.logs.map(l => l.pb ? 8 : 5), tension: 0.1, borderWidth: 2
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { reverse: true, title: { display: true, text: 'タイム (秒)' } } } }
-        });
-    }
-
-    function closeAgentModal() {
-        if(getEl('agent-modal-overlay')) getEl('agent-modal-overlay').style.display = 'none';
-        if(getEl('agent-modal')) getEl('agent-modal').style.display = 'none';
-    }
-
     function showEnd() {
         document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); getEl('screen-result').classList.add('active');
         let t = agents.filter(a=>a.univ===UNIVS[0]).sort((a,b)=>(b.money||0)-(a.money||0));
@@ -1784,30 +1814,3 @@
 </script>
 </body>
 </html>
-```
-
-このコードを保存してゲームをクリアし、ランキング画面を開いたとき、「**ランキングデータ取得中...**」という文字が一瞬表示されたあとに、データが表示されればFirebase連携成功です！
-
----
-
-### 🔥 もしデータが保存されなかった場合の「確認と設定」
-先ほどのチャットでもお伝えした通り、Firestoreデータベースは**「誰が読み書きしていいか」というルール（関所）**が設定されています。ここを通れるように設定する必要があります。
-
-1. **[Firebase コンソール](https://console.firebase.google.com/)** にアクセスし、プロジェクトを開きます。
-2. 左メニューの **「構築」 > 「Authentication」** を開きます。
-3. **「Sign-in method」**タブで、**「匿名」** を有効にして保存してください。
-4. 次に、左メニューの **「構築」 > 「Firestore Database」** を開きます。
-5. 上部の **「ルール」** タブを開き、コードを以下のように書き換えて「公開」を押してください。
-```text
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
-
-これで関所が開放され、どんな端末からでもスコアが飛んでくるようになります。
-このHTMLファイルをGitHub PagesなどにホスティングしてURLを共有すれば、**世界中の誰が遊んでも同じランキングボードに結果が反映されます！**
