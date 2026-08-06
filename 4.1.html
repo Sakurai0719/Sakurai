@@ -3,17 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>400m Track & Field Pro - オンラインランキング</title>
-    <!-- Tailwind CSS -->
+    <title>400m Track & Field Pro Simulation</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f6; color: #333; margin: 0; padding: 10px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .screen { display: none !important; }
+        .screen.active { display: block !important; }
+        #screen-setup.active { display: flex !important; }
+        button { transition: background 0.2s; }
+        
+        /* 遠近法トラックアニメーション */
+        @keyframes track-flow {
+            0% { stroke-dashoffset: 200; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .anim-lane-line path {
+            stroke-dasharray: 100 100;
+            animation: track-flow 1s linear infinite;
+        }
+
+        /* 12原則を応用したタイポグラフィアニメーション */
+        @keyframes sprint-in {
+            0% { transform: translateX(-80px) skewX(-30deg) scaleX(1.3) scaleY(0.8); opacity: 0; }
+            40% { transform: translateX(10px) skewX(10deg) scaleX(0.9) scaleY(1.1); opacity: 1; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+            70% { transform: translateX(-4px) skewX(-5deg) scaleX(1.05) scaleY(0.95); }
+            100% { transform: translateX(0) skewX(-12deg) scaleX(1) scaleY(1); opacity: 1; }
+        }
+        @keyframes char-hover {
+            0%, 100% { transform: translateY(0) skewX(-12deg); }
+            50% { transform: translateY(-3px) skewX(-12deg); }
+        }
+        .title-char {
+            display: inline-block; opacity: 0;
+            transform: skewX(-12deg);
+            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.6));
+            animation: sprint-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, char-hover 3s ease-in-out infinite alternate;
+            animation-delay: calc(var(--i) * 0.06s), calc(1s + var(--i) * 0.1s);
+            padding: 0.1em; margin-top: -0.1em; margin-bottom: -0.1em;
+        }
+
+        @keyframes slide-in-fade {
+            0% { transform: translateX(-30px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .anim-list-item { opacity: 0; animation: slide-in-fade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .anim-list-item:nth-child(1) { animation-delay: 0.8s; }
+        .anim-list-item:nth-child(2) { animation-delay: 1.0s; }
+        .anim-list-item:nth-child(3) { animation-delay: 1.2s; }
+        
+        @keyframes float-whistle { 0%, 100% { transform: translateY(0) rotate(-10deg); } 50% { transform: translateY(-4px) rotate(10deg); } }
+        .anim-float-whistle { animation: float-whistle 2.5s ease-in-out infinite; }
+        @keyframes gentle-shake { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-2px) rotate(-3deg); } 75% { transform: translateX(2px) rotate(3deg); } }
+        @keyframes rotate-3d { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+        @keyframes gentle-pulse { 0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.5));} 50% { transform: scale(1.1); opacity: 0.9; filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));} }
+        .anim-shake { animation: gentle-shake 1.5s ease-in-out infinite; }
+        .anim-spin-3d { animation: rotate-3d 4s ease-in-out infinite; }
+        .anim-pulse { animation: gentle-pulse 2s ease-in-out infinite; }
+
+        @keyframes smash-in {
+            0% { transform: scale(5) rotate(10deg); opacity: 0; }
+            50% { transform: scale(0.9) rotate(-2deg); opacity: 1; }
+            70% { transform: scale(1.05) rotate(1deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .anim-smash { animation: smash-in 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes flash-bg {
+            0% { background-color: rgba(255,255,255,1); opacity: 1; }
+            10% { background-color: rgba(255,255,255,1); opacity: 1; }
+            100% { background-color: rgba(255,255,255,0.8); opacity: 0; }
+        }
+        .anim-flash { animation: flash-bg 3s ease-out forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+
+        .dashboard { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .dashboard { grid-template-columns: 2fr 1fr; } }
+        .main-col { display: flex; flex-direction: column; gap: 20px; }
+        .side-col { display: flex; flex-direction: column; gap: 20px; }
+        .panel { padding: 15px; border-radius: 5px; background: #ecf0f1; }
+        .rival-panel { background: #fff; border: 1px solid #bdc3c7; padding: 15px; border-radius: 5px; }
+        .shop-panel { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 5px; }
+        .log-area { margin-top: 20px; max-height: 250px; overflow-y: auto; background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 14px; line-height: 1.5; }
+        .coach-comment { background: #dff9fb; border-left: 5px solid #22a6b3; padding: 10px; margin-top: 10px; font-weight: bold; border-radius: 3px; }
+        .highlight { color: #f1c40f; font-weight: bold; }
+        .injury { color: #e74c3c; font-weight: bold; }
+        .success { color: #2ecc71; font-weight: bold;}
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        th { background: #2c3e50; color: white; position: sticky; top: 0; z-index: 10; }
+        .player-row { background: #fffae6; font-weight: bold; }
+        .teammate-row { background: #e8f8f5; font-weight: bold; }
+        .clickable-row { cursor: pointer; transition: 0.2s; }
+        .clickable-row:hover { opacity: 0.8; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
+        
+        #toast-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99999; display: none; text-align: center; pointer-events: none;}
+        .toast { background: rgba(44, 62, 80, 0.95); color: white; padding: 25px 50px; border-radius: 12px; font-size: 24px; font-weight: bold; line-height: 1.4; animation: pop 1.5s forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .toast.pb { background: rgba(243, 156, 18, 0.95); }
+        .toast.success { background: rgba(39, 174, 96, 0.95); }
+        .toast.fail { background: rgba(192, 57, 43, 0.95); }
+        .toast.medal { background: rgba(241, 196, 15, 0.95); color: #2c3e50;}
+        @keyframes pop { 0% { opacity:0; transform:scale(0.5); } 15%,80% { opacity:1; transform:scale(1); } 100% { opacity:0; transform:scale(1.2); } }
+        
+        .medal-gold { color: #f1c40f; font-size: 18px;} .medal-silver { color: #bdc3c7; font-size: 18px;} .medal-bronze { color: #cd7f32; font-size: 18px;}
+        
+        #race-canvas-container { width: 100%; background: #2c3e50; border-radius: 8px; padding: 10px 0; overflow: hidden; display: flex; justify-content: center; transition: background 0.5s; }
+        canvas#raceCanvas { display: block; max-width: 100%; height: auto !important; }
+
+        .relay-box { background: #fdfefe; border: 2px solid #bdc3c7; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .relay-mine { border-color: #f1c40f; background: #fffcf3; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #3498db; cursor: pointer; margin-top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #bdc3c7; border-radius: 4px; }
+        
+        .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #95a5a6; color: white; border-radius: 50%; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 4px; vertical-align: middle; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .help-icon:hover { background: #34495e; transform: scale(1.1); }
+        details > summary { list-style: none; outline: none; }
+        details > summary::-webkit-details-marker { display: none; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+
     <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // ゲーム本体と同じ設定情報
         const firebaseConfig = {
             apiKey: "AIzaSyCcm0VxhPW-G4VDiMiXQQtjHAY1Vl25Zwc",
             authDomain: "ikuseiharunosuke.firebaseapp.com",
@@ -25,140 +145,1673 @@
             measurementId: "G-L5Y7M057FJ"
         };
 
-        let app, db, auth;
+        let db, auth;
         try {
-            app = initializeApp(firebaseConfig);
+            const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
         } catch(e) {
-            console.error("Firebase Init Error:", e);
+            console.warn("Firebase Init Error:", e);
         }
 
-        // ランキング取得・描画メイン処理
-        window.fetchRankings = async function(category) {
-            const container = document.getElementById('ranking-list-container');
-            container.innerHTML = `<div class="text-center py-10 text-slate-400 font-bold animate-pulse">📡 データを取得中...</div>`;
-
+        window.initFirebaseAuth = async () => {
+            if (!auth) return false;
             try {
-                // まず匿名ログインを確実に済ませる（データベースの読み取り許可をもらうため）
                 await signInAnonymously(auth);
-
-                // データの取得
-                const q = query(collection(db, `rankings/v1/${category}`));
-                const snapshot = await getDocs(q);
-                let data = [];
-                snapshot.forEach(doc => {
-                    data.push(doc.data());
-                });
-
-                // ソート（並び替え）処理
-                if (category === 'rta' || category === 'pb') {
-                    // 少ない順（昇順）
-                    data.sort((a, b) => Number(a.val) - Number(b.val));
-                } else if (category === 'pbCount') {
-                    // 多い順（降順）
-                    data.sort((a, b) => Number(b.val) - Number(a.val));
-                }
-
-                if (data.length === 0) {
-                    container.innerHTML = `<div class="text-center py-10 text-slate-400 font-bold">まだランキングデータがありません</div>`;
-                    return;
-                }
-
-                let html = '';
-                data.forEach((item, index) => {
-                    const rank = index + 1;
-                    let rankBadge = `bg-slate-700 text-slate-200`;
-                    if (rank === 1) rankBadge = `bg-yellow-500 text-white shadow-md shadow-yellow-500/50`;
-                    else if (rank === 2) rankBadge = `bg-slate-300 text-slate-800`;
-                    else if (rank === 3) rankBadge = `bg-amber-600 text-white`;
-
-                    // 表示用テキストの調整
-                    let displayVal = item.display || item.val;
-                    if (category === 'pb') displayVal = Number(item.val).toFixed(2) + "秒";
-                    if (category === 'pbCount') displayVal = item.val + "回";
-                    if (category === 'rta' && !item.display) displayVal = item.text || (item.val + "ターン");
-
-                    html += `
-                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 mb-2 hover:bg-slate-700 transition duration-200">
-                            <div class="flex items-center space-x-3 truncate pr-2">
-                                <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-sm ${rankBadge}">
-                                    ${rank}
-                                </div>
-                                <div class="truncate">
-                                    <div class="font-bold text-slate-100 truncate">${escapeHtml(item.name || '名無し')}</div>
-                                    <div class="text-xs text-slate-400">${item.date || ''}</div>
-                                </div>
-                            </div>
-                            <div class="text-right font-mono font-bold text-emerald-400 text-sm md:text-base flex-shrink-0 pl-2">
-                                ${displayVal}
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-
+                return true;
             } catch (e) {
-                console.error(e);
-                container.innerHTML = `<div class="text-center py-10 text-red-400 font-bold">データの取得に失敗しました。<br>通信環境を確認してください。</div>`;
+                console.warn("Auth Error:", e);
+                return false;
             }
-        }
-
-        function escapeHtml(str) {
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        }
-
-        // タブ切り替え制御
-        window.switchTab = function(category, btnElement) {
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = "tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition";
-            });
-            btnElement.className = "tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition";
-            window.fetchRankings(category);
         };
 
-        // 画面読み込み時にPBランキングを自動取得
-        window.addEventListener('DOMContentLoaded', () => {
-            window.fetchRankings('pb');
-        });
+        window.saveRankingOnline = async (tab, data) => {
+            if (!auth || !auth.currentUser) return false;
+            try {
+                const colRef = collection(db, 'rankings', 'v1', tab);
+                await addDoc(colRef, data);
+                return true;
+            } catch (e) {
+                console.error("Firestore Save Error:", e);
+                return false;
+            }
+        };
+
+        window.getRankingOnline = async (tab) => {
+            if (!auth || !auth.currentUser) return null;
+            try {
+                const colRef = collection(db, 'rankings', 'v1', tab);
+                const snapshot = await getDocs(colRef);
+                let results = [];
+                snapshot.forEach(doc => results.push(doc.data()));
+                return results;
+            } catch (e) {
+                console.error("Firestore Get Error:", e);
+                return null;
+            }
+        };
     </script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+<body>
+<div id="toast-container"></div>
 
-    <div class="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[85vh] max-h-[800px]">
+<!-- 優勝特別演出オーバーレイ (ホワイトアウト＆巨大テキスト) -->
+<div id="champ-celeb" class="fixed inset-0 z-[10000] hidden flex items-center justify-center pointer-events-none">
+    <div id="champ-whiteout" class="absolute inset-0 bg-white opacity-0"></div>
+    <div id="champ-text" class="relative z-10 opacity-0 leading-tight"></div>
+</div>
+
+<!-- 👑 世界優勝セレブレーション モーダル (RTA登録用) -->
+<div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[10001] hidden"></div>
+<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 md:p-8 rounded-2xl z-[10002] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400 max-h-[90vh] flex-col">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-yellow-500 mb-3">👑 WORLD CHAMPION!</h2>
+    <p class="text-sm md:text-base text-gray-700 font-bold mb-4">ついに世界大会での優勝を果たしました！</p>
+    
+    <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar text-left mb-4">
+        <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-4">
+            <p class="font-bold text-gray-800 mb-2">👨‍💻 開発者 ハルノスケより</p>
+            <p id="celeb-msg" class="text-xs md:text-sm text-gray-700 leading-relaxed"></p>
+        </div>
+
+        <div id="celeb-rta-area" class="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg shadow-inner">
+            <h3 class="font-bold text-purple-800 mb-2 text-base md:text-lg">👑 世界優勝RTA 記録登録</h3>
+            <p class="text-xs md:text-sm text-gray-700 mb-2">クリアタイム: <span id="celeb-rta-time" class="font-extrabold text-purple-700 text-base md:text-lg"></span></p>
+            <input type="text" id="celeb-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border-2 border-purple-200 p-2 md:p-3 rounded w-full text-center font-bold mb-2 text-sm" value="ハルノスケ">
+            <div class="flex flex-col gap-2">
+                <button id="celeb-reg-btn" onclick="registerRTAFromCeleb()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 md:py-3 px-4 rounded shadow-md transition-transform transform hover:scale-105 w-full text-sm">送信してランキングに登録</button>
+                <button id="celeb-view-ranking-btn" onclick="openRankingModal()" style="display:none;" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md w-full text-sm">🏆 ランキングを見る</button>
+            </div>
+        </div>
+    </div>
+    <div class="pt-3 border-t border-gray-200 text-center">
+        <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-base w-full">次へ進む / 競技を続ける</button>
+    </div>
+</div>
+
+<!-- ヘルプ・エージェントモーダル -->
+<div id="help-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeHelpModal()"></div>
+<div id="help-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg z-[9999] w-11/12 max-w-md hidden shadow-2xl">
+    <h3 id="help-title" class="text-xl font-bold mb-2 text-gray-800"></h3>
+    <p id="help-desc" class="text-sm text-gray-600 leading-relaxed mb-4"></p>
+    <div class="text-center"><button onclick="closeHelpModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-bold w-full">閉じる</button></div>
+</div>
+
+<div id="agent-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeAgentModal()"></div>
+<div id="agent-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-5 rounded-lg z-[9999] w-11/12 max-w-3xl max-h-[90vh] overflow-y-auto hidden shadow-2xl">
+    <h2 id="modal-agent-name" class="text-2xl font-bold text-gray-800 mb-4"></h2>
+    <div class="bg-gray-50 p-2 rounded mb-4">
+        <div class="relative h-64 w-full">
+            <canvas id="modal-race-chart"></canvas>
+        </div>
+    </div>
+    <div class="text-center"><button onclick="closeAgentModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold">閉じる</button></div>
+</div>
+
+<!-- 🏆 リッチデザイン ランキングモーダル -->
+<div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[10000] hidden" onclick="closeRankingModal()"></div>
+<div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-4 rounded-2xl z-[10001] w-11/12 max-w-3xl max-h-[95vh] hidden shadow-2xl flex flex-col">
+    <div class="flex justify-between items-center mb-3">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight">🏆 殿堂入りランキング</h2>
+        <button onclick="closeRankingModal()" class="text-gray-400 hover:text-gray-800 font-bold text-xl">&times;</button>
+    </div>
+    <div class="flex flex-wrap gap-2 mb-4 justify-center" id="ranking-tabs">
+        <button id="tab-btn-pb" onclick="showRankingTab('pb')">自己ベスト</button>
+        <button id="tab-btn-pbDiff" onclick="showRankingTab('pbDiff')">成長幅</button>
+        <button id="tab-btn-injury" onclick="showRankingTab('injury')">怪我王</button>
+        <button id="tab-btn-money" onclick="showRankingTab('money')">総稼ぎ</button>
+        <button id="tab-btn-pbCount" onclick="showRankingTab('pbCount')">PB回数</button>
+        <button id="tab-btn-rta" onclick="showRankingTab('rta')">世界優勝RTA</button>
+    </div>
+    <div id="ranking-screenshot-area" class="relative flex-1 bg-white border-2 border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden min-h-[300px]">
+        <div id="ranking-category-header" class="text-center py-4 text-white font-extrabold text-xl md:text-2xl shadow-md z-20 relative tracking-wide">カテゴリー</div>
+        <div id="ranking-content" class="p-0 overflow-y-auto bg-white flex-1 custom-scrollbar"></div>
+        <div class="bg-gray-800 text-center py-2 text-xs md:text-sm text-gray-300 font-bold tracking-[0.2em] shadow-inner z-20 relative">400m Track & Field Pro Simulation</div>
+    </div>
+    <div class="text-center mt-4">
+        <p class="text-xs text-gray-500 mb-2 font-bold">💡 上の枠内をスクショしてシェアしよう！</p>
+        <button onclick="closeRankingModal()" class="bg-gray-700 hover:bg-gray-800 text-white px-10 py-3 rounded-full font-bold shadow-lg transition-transform transform hover:scale-105 w-full md:w-auto">閉じる</button>
+    </div>
+</div>
+
+<!-- 豪華版タイトル画面 -->
+<div id="screen-setup" class="screen active fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950 overflow-hidden font-sans">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none z-0 flex justify-center items-end" style="perspective: 600px;">
+        <div class="w-[300%] h-[200%] absolute bottom-0" style="transform: rotateX(80deg); transform-origin: bottom center;">
+            <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1000 1000">
+                <path d="M 350,0 Q 800,400 -200,1000 L 1400,1000 Q 1600,400 1200,0 Z" fill="#a03022" />
+                <g stroke="#ffffff" stroke-width="4" fill="none" class="anim-lane-line" opacity="0.8">
+                    <path d="M 400,0 Q 850,400 -100,1000" /><path d="M 450,0 Q 900,400 0,1000" /><path d="M 500,0 Q 950,400 100,1000" /><path d="M 550,0 Q 1000,400 200,1000" /><path d="M 600,0 Q 1050,400 300,1000" /><path d="M 650,0 Q 1100,400 400,1000" /><path d="M 700,0 Q 1150,400 500,1000" /><path d="M 750,0 Q 1200,400 600,1000" /><path d="M 800,0 Q 1250,400 700,1000" />
+                </g>
+            </svg>
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent h-[70%]"></div>
+        <div class="absolute inset-0 bg-slate-950/30"></div>
+    </div>
+
+    <div class="relative z-20 w-full max-w-lg flex flex-col items-center p-6 mt-4 md:mt-10">
+        <div class="flex items-baseline justify-center mb-6 font-black w-full" style="line-height: 1;">
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:0; letter-spacing: -0.05em; margin-right: -0.02em;">ハ</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:1; letter-spacing: -0.05em; margin-right: -0.02em;">ル</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:2; letter-spacing: -0.08em; margin-right: -0.04em;">ノ</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:3; letter-spacing: -0.05em; margin-right: -0.02em;">ス</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:4; margin-right: -0.05em;">ケ</span>
+            
+            <span class="title-char text-cyan-400 text-3xl sm:text-4xl md:text-5xl font-serif" style="--i:5; letter-spacing: -0.1em; margin-right: -0.08em;">育</span>
+            <span class="title-char text-cyan-400 text-3xl sm:text-4xl md:text-5xl font-serif" style="--i:6; margin-right: 0;">成</span>
+            
+            <span class="title-char text-slate-300 text-4xl sm:text-5xl md:text-6xl" style="--i:7; letter-spacing: -0.08em; margin-right: -0.02em;">ゲ</span>
+            <span class="title-char text-slate-300 text-4xl sm:text-5xl md:text-6xl" style="--i:8; letter-spacing: -0.1em; margin-right: -0.04em;">ー</span>
+            <span class="title-char text-slate-300 text-4xl sm:text-5xl md:text-6xl" style="--i:9;">ム</span>
+        </div>
+        <p class="text-cyan-200/80 font-bold tracking-[0.3em] text-xs md:text-sm mt-0 uppercase shadow-black drop-shadow-md z-20 mb-8">400m Track & Field Pro Simulation</p>
+
+        <div class="bg-slate-900/85 backdrop-blur-md border border-slate-700/50 p-5 rounded-2xl w-full mb-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-6 left-4 bg-slate-800 border-2 border-slate-600 rounded-full p-2 shadow-lg anim-float-whistle">
+                <svg class="w-8 h-8 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a3 3 0 0 1 3 3v2h2v2h-2v1a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-1H2v-2h2V10a3 3 0 0 1 3-3h1V5.73A2 2 0 0 1 12 2zm-1 9a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0v-3a1 1 0 1 0-1-1zM20 7a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V8a1 1 0 0 1 1-1z"/></svg>
+            </div>
+            <h2 class="text-lg font-bold text-slate-100 ml-12 mb-4">プロへの道しるべ</h2>
+            <ul class="text-sm text-slate-300 space-y-4 font-medium">
+                <li class="flex items-start anim-list-item">
+                    <div class="w-6 h-6 mr-3 flex-shrink-0 text-cyan-400 anim-shake"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg></div>
+                    <div><span class="text-white font-bold">1. 練習で走力を上げよう</span><br><span class="text-xs text-slate-400">練習量を調整し、ベースとなるタイムを縮めます。</span></div>
+                </li>
+                <li class="flex items-start anim-list-item">
+                    <div class="w-6 h-6 mr-3 flex-shrink-0 text-yellow-400 anim-spin-3d"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.11 1.71 1.25 2.85 2.9 3.2V19h2.32v-1.66c1.64-.37 2.88-1.44 2.88-3 0-2.12-1.85-2.8-3.79-3.2z"/></svg></div>
+                    <div><span class="text-white font-bold">2. 大会で賞金を稼ごう</span><br><span class="text-xs text-slate-400">賞金でスパイクやケア道具を買い、自己投資しましょう。</span></div>
+                </li>
+                <li class="flex items-start anim-list-item">
+                    <div class="w-6 h-6 mr-3 flex-shrink-0 text-red-400 anim-pulse"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35zM9 9H7v2h2v2h2v-2h2V9h-2V7H9v2z"/></svg></div>
+                    <div><span class="text-red-300 font-bold">3. 怪我のリスクを管理</span><br><span class="text-xs text-red-400/80">練習しすぎると怪我をしてしまいます。疲労管理が鍵です。</span></div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="w-full bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-6 relative z-30">
+            <label class="font-bold text-sm text-slate-300 mb-2 flex justify-between items-center">
+                <span>🏃 レース展開作戦</span>
+                <span class="help-icon bg-slate-700 text-slate-300 border-none cursor-pointer hover:bg-slate-600" onclick="showHelp('strategy')">?</span>
+            </label>
+            <select id="player-strategy" class="w-full p-3 bg-slate-950 border border-slate-700 text-white rounded-lg focus:outline-none focus:border-cyan-500 appearance-none font-bold">
+                <option value="FRONT">先行型 (前半から突っ込む)</option>
+                <option value="EVEN" selected>バランス型 (イーブンペース)</option>
+                <option value="BACK">後半型 (ラストスパート)</option>
+            </select>
+        </div>
+
+        <button onclick="startGame()" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 hover:-translate-y-1 text-xl tracking-widest relative overflow-hidden group border border-cyan-400/50">
+            <span class="relative z-10">プロの世界へ</span>
+            <div class="absolute inset-0 h-full w-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+        </button>
+    </div>
+</div>
+
+<!-- ゲームメインUI -->
+<div class="container relative z-10">
+    <div id="screen-main" class="screen">
+        <h2 id="season-title" class="text-2xl font-bold mb-4 text-gray-800 border-b-2 border-gray-300 pb-2"></h2>
         
-        <!-- ヘッダー -->
-        <div class="p-4 bg-slate-800/80 border-b border-slate-700 flex justify-between items-center shadow-sm">
-            <h1 class="font-black text-lg md:text-xl text-indigo-400 flex items-center gap-2">
-                🏆 400m Pro ランキング
-            </h1>
-            <a href="index.html" class="text-xs md:text-sm font-bold text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition">ゲームに戻る</a>
-        </div>
+        <div class="dashboard">
+            <div class="main-col">
+                <div class="panel shadow bg-gray-50 border border-gray-200">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700">📝 進行ログ</h3>
+                    <div class="log-area shadow-inner mt-0" id="log-area"></div>
+                </div>
 
-        <!-- タブ切り替え -->
-        <div class="flex p-3 bg-slate-900 border-b border-slate-800 justify-around gap-2">
-            <button onclick="switchTab('pb', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition flex-1">自己ベスト</button>
-            <button onclick="switchTab('rta', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition flex-1">世界優勝RTA</button>
-            <button onclick="switchTab('pbCount', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition flex-1">更新回数</button>
-        </div>
+                <div class="panel shadow">
+                    <h3 class="text-xl font-bold mb-3 text-gray-700">📊 あなたのステータス</h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                        <div class="bg-white p-2 rounded border">生涯PB: <span id="my-pb" class="highlight text-lg"></span> 秒</div>
+                        <div class="bg-white p-2 rounded border relative">資格記録 <span class="help-icon" onclick="showHelp('qualifying')">?</span>: <span id="my-qual" class="font-bold text-red-500 text-lg"></span> 秒</div>
+                        <div class="bg-white p-2 rounded border">走力 <span class="help-icon" onclick="showHelp('ability')">?</span>: <span id="my-ability" class="font-bold"></span> 秒</div>
+                        <div class="bg-white p-2 rounded border">今季ベスト: <span id="my-sb" class="font-bold"></span> 秒</div>
+                        <div class="bg-white p-2 rounded border">状態: <span id="my-injury"></span></div>
+                        <div class="bg-white p-2 rounded border">疲労度 <span class="help-icon" onclick="showHelp('fatigue')">?</span>: <span id="my-fatigue" class="font-bold text-orange-500"></span> /10</div>
+                    </div>
+                    
+                    <div class="coach-comment text-sm">
+                        👨‍練 <strong>コーチ:</strong> <span id="coach-message"></span>
+                    </div>
+                    <hr class="my-4 border-gray-300">
+                    
+                    <!-- アクションパネル群 -->
+                    <div id="panel-spring-sel" class="action-panel">
+                        <h3 class="text-lg font-bold mb-2 text-indigo-700">🌸 春（春インカレ部内選考）</h3>
+                        <p class="text-sm mb-2">標準: <strong style="color:#d35400;">47.60秒</strong> | 資格記録: <span id="pre-sel-spring-qual" class="highlight"></span> 秒</p>
+                        <button onclick="executeSelection('春インカレ', 47.60)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded shadow">部内選考に出走</button>
+                    </div>
+                    
+                    <div id="panel-spring-main" class="action-panel bg-yellow-50 p-4 rounded border border-yellow-200">
+                        <h3 class="text-lg font-bold mb-2 text-yellow-800">🌸 春インカレ 本戦</h3>
+                        <p class="mb-2"><strong>状態:</strong> <span id="spring-main-status" class="font-bold"></span></p>
+                        <div id="spring-relay-announce" class="bg-white border border-gray-300 p-2 mb-3 rounded text-sm"></div>
+                        <button id="btn-spring-main" onclick="executeMain('春インカレ', 47.60)" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded shadow"></button>
+                    </div>
 
-        <!-- リスト表示エリア -->
-        <div id="ranking-list-container" class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-            <!-- 動的にデータが挿入されます -->
-        </div>
+                    <div id="panel-japan-champ" class="action-panel bg-red-50 p-4 rounded border border-red-200">
+                        <h3 class="text-lg font-bold mb-2 text-red-800">🇯🇵 日本選手権</h3>
+                        <p class="mb-2 text-sm">参加標準記録: <strong>46.30秒</strong></p>
+                        <div id="jc-status" class="mb-3 text-sm"></div>
+                        <div id="jc-action"></div>
+                    </div>
 
-        <!-- フッター -->
-        <div class="p-3 bg-slate-950 border-t border-slate-900 text-center text-xs font-bold text-slate-600 tracking-widest">
-            400m Track & Field Pro Leaderboard
+                    <div id="panel-summer-prac" class="action-panel">
+                        <h3 class="text-lg font-bold mb-3 text-orange-600">☀️ 夏（練習・記録会）</h3>
+                        <div class="mb-4">
+                            <label class="font-bold text-sm flex items-center">🔥 総努力量 (2.0 ~ 10.0) <span class="help-icon" onclick="showHelp('effort')">?</span>: <span id="val-summer-e" class="text-orange-500 text-lg ml-2">6.0</span></label>
+                            <input type="range" id="input-summer-e" min="2" max="10" step="0.1" value="6.0" oninput="updateRisk()" class="mt-2">
+                        </div>
+                        <div class="mb-4 flex items-center justify-between bg-white p-2 rounded border">
+                            <label class="font-bold text-sm flex items-center">⏱️ 記録会出場 <span class="help-icon" onclick="showHelp('meets')">?</span>:</label>
+                            <select id="input-summer-m" class="p-1 border rounded focus:outline-none" onchange="updateRisk()">
+                                <option value="0">0回</option><option value="1">1回</option><option value="2" selected>2回</option>
+                                <option value="3">3回</option><option value="4">4回</option><option value="5">5回(ハード)</option>
+                            </select>
+                        </div>
+                        <div class="mb-4 flex items-center justify-between bg-white p-3 rounded border border-red-200 cursor-pointer" onclick="document.getElementById('input-prize-meet').click()">
+                            <label class="font-bold text-sm flex flex-col cursor-pointer">
+                                <span class="text-red-600 flex items-center">💸 夏・グランプリ出場 <span class="help-icon" onclick="event.stopPropagation(); showHelp('prize-meet')">?</span></span>
+                                <span class="text-xs text-gray-500 font-normal mt-1">標準: 47.00秒 / 参加費: 10,000円</span>
+                            </label>
+                            <input type="checkbox" id="input-prize-meet" class="w-6 h-6 accent-red-500 cursor-pointer" onclick="event.stopPropagation()">
+                        </div>
+                        <button onclick="executePractice(false)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded shadow">夏練習を完了</button>
+                    </div>
+
+                    <div id="panel-autumn-sel" class="action-panel">
+                        <h3 class="text-lg font-bold mb-2 text-indigo-700">🏃 秋インカレ部内選考</h3>
+                        <p class="text-sm mb-2">標準: <strong style="color:#d35400;">47.40秒</strong> | 資格記録: <span id="pre-sel-summer-qual" class="highlight"></span> 秒</p>
+                        <button onclick="executeSelection('秋インカレ', 47.40)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded shadow">部内選考に出走</button>
+                    </div>
+                    
+                    <div id="panel-autumn-main" class="action-panel bg-yellow-50 p-4 rounded border border-yellow-200">
+                        <h3 class="text-lg font-bold mb-2 text-yellow-800">🏃 秋インカレ 本戦</h3>
+                        <p class="mb-2"><strong>状態:</strong> <span id="autumn-main-status" class="font-bold"></span></p>
+                        <div id="autumn-relay-announce" class="bg-white border border-gray-300 p-2 mb-3 rounded text-sm"></div>
+                        <button id="btn-autumn-main" onclick="executeMain('秋インカレ', 47.40)" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded shadow"></button>
+                    </div>
+
+                    <div id="panel-intl-champ" class="action-panel bg-purple-50 p-4 rounded border border-purple-200">
+                        <h3 class="text-lg font-bold mb-2 text-purple-800">🌍 国際大会 (世界選手権/五輪)</h3>
+                        <p class="mb-2 text-sm">参加標準記録: <strong>45.50秒</strong></p>
+                        <div id="intl-status" class="mb-3 text-sm"></div>
+                        <div id="intl-action"></div>
+                    </div>
+
+                    <div id="panel-winter" class="action-panel">
+                        <h3 class="text-lg font-bold mb-3 text-blue-600">⛄️ 冬季練習</h3>
+                        <div class="mb-4">
+                            <label class="font-bold text-sm flex items-center">🔥 総努力量 (2.0 ~ 10.0) <span class="help-icon" onclick="showHelp('effort')">?</span>: <span id="val-winter-e" class="text-blue-500 text-lg ml-2">7.0</span></label>
+                            <input type="range" id="input-winter-e" min="2" max="10" step="0.1" value="7.0" oninput="updateRisk()" class="mt-2">
+                        </div>
+                        <button onclick="executePractice(true)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded shadow">冬季練習を完了</button>
+                    </div>
+
+                    <div id="panel-new-year" class="action-panel">
+                        <h3 class="text-lg font-bold mb-3 text-green-600">🌸 新入生歓迎・卒業生送別</h3>
+                        <div id="new-year-content" class="mb-4 bg-white p-3 rounded border"></div>
+                        <button id="btn-new-year" onclick="startNewYear()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded shadow">新シーズンを開始する</button>
+                    </div>
+
+                    <div id="risk-container" class="mt-4 bg-white p-3 border border-gray-300 rounded shadow-sm hidden">
+                        <h4 class="text-sm font-bold mb-2 text-gray-700">⚠️ 練習プラン予測</h4>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-gray-600">📈 期待タイム短縮:</span>
+                            <span id="exp-growth-text" class="font-bold text-sm">0.00秒</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-600 w-20">🏥 怪我リスク:</span>
+                            <div class="flex-1 h-4 bg-gray-200 rounded overflow-hidden relative">
+                                <div id="risk-bar" class="absolute top-0 left-0 h-full transition-all duration-300" style="width: 0%; background-color: #2ecc71;"></div>
+                            </div>
+                            <div id="risk-text" class="w-10 text-right text-xs font-bold">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="side-col">
+                <div class="shop-panel shadow">
+                    <h3 class="text-lg font-bold mb-3 text-blue-800 flex items-center">🛒 自己投資（ショップ）</h3>
+                    <div class="mb-3 text-base font-bold text-gray-800 bg-white p-3 rounded border text-center shadow-sm">
+                        所持金: <span id="my-money" class="text-green-600 text-xl">100,000</span> 円
+                    </div>
+                    <details class="group bg-white rounded border mb-2 shadow-sm transition-all duration-300">
+                        <summary class="p-3 font-bold text-sm cursor-pointer flex justify-between items-center bg-blue-50 hover:bg-blue-100 rounded-t">
+                            <span>💆 ケア道具 <span class="text-xs text-gray-500 font-normal ml-1">(Lv.<span id="care-lv">0</span>)</span></span>
+                            <span class="text-xs text-blue-600 group-open:hidden">詳細・購入 ▼</span>
+                            <span class="text-xs text-blue-600 hidden group-open:inline">閉じる ▲</span>
+                        </summary>
+                        <div class="p-3 border-t bg-white rounded-b">
+                            <div class="flex flex-col mb-2">
+                                <span class="text-sm font-bold text-gray-800" id="care-name">なし</span>
+                                <span class="text-xs font-bold text-blue-600 mt-1">効果: 疲労蓄積 -<span id="care-eff">0</span>%</span>
+                            </div>
+                            <button id="btn-buy-care" onclick="buyItem('care')" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-2 rounded shadow">購入: <span id="care-cost">3000</span>円</button>
+                        </div>
+                    </details>
+                    <details class="group bg-white rounded border mb-3 shadow-sm transition-all duration-300">
+                        <summary class="p-3 font-bold text-sm cursor-pointer flex justify-between items-center bg-red-50 hover:bg-red-100 rounded-t">
+                            <span>👟 スパイク <span class="text-xs text-gray-500 font-normal ml-1">(Lv.<span id="spike-lv">0</span>)</span></span>
+                            <span class="text-xs text-red-600 group-open:hidden">詳細・購入 ▼</span>
+                            <span class="text-xs text-red-600 hidden group-open:inline">閉じる ▲</span>
+                        </summary>
+                        <div class="p-3 border-t bg-white rounded-b">
+                            <div class="flex flex-col mb-2">
+                                <span class="text-sm font-bold text-gray-800" id="spike-name">なし</span>
+                                <span class="text-xs font-bold text-red-600 mt-1">効果: 走力タイム -<span id="spike-eff">0.00</span>秒</span>
+                            </div>
+                            <button id="btn-buy-spike" onclick="buyItem('spike')" class="w-full bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 rounded shadow">購入: <span id="spike-cost">5000</span>円</button>
+                        </div>
+                    </details>
+                    <div class="bg-white p-3 rounded border shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-sm">🥩 特別食 <span class="text-xs text-gray-500 font-normal ml-1">(1回/期)</span></span>
+                            <span class="text-xs text-gray-600 font-bold bg-gray-100 px-2 py-1 rounded">疲労-1.0, 走力-0.02s</span>
+                        </div>
+                        <button id="btn-buy-food" onclick="buyItem('food')" class="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2 rounded shadow">購入: 20,000円</button>
+                    </div>
+                </div>
+
+                <div class="rival-panel shadow">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 flex justify-between items-end">
+                        <span>👥 部員一覧</span><span class="text-xs font-normal text-gray-500">(タップで詳細)</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[280px]">
+                            <thead><tr><th class="py-1 w-12">学年</th><th class="py-1 w-8">順</th><th class="py-1">名前</th><th class="py-1">PB</th><th class="py-1">資格</th><th class="py-1">直近</th><th class="py-1">状</th></tr></thead>
+                            <tbody id="rival-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <style>
-        /* スクロールバーのカスタマイズ */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
-    </style>
+    <div id="screen-race" class="screen bg-white p-5 rounded-lg shadow-xl relative overflow-hidden">
+        <h2 id="race-title" class="text-xl font-bold text-center mb-2 text-gray-800"></h2>
+        <div id="race-timer" class="text-center text-3xl font-bold text-red-500 mb-4 font-mono">0.00 秒</div>
+        <div id="race-canvas-container" class="shadow-inner relative"><canvas id="raceCanvas" class="relative z-10"></canvas></div>
+        <div class="text-center mt-4 relative z-20"><button onclick="skipRace()" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg shadow-md text-lg w-full max-w-sm">⏭️ スキップ (結果を見る)</button></div>
+    </div>
+
+    <div id="screen-tournament" class="screen bg-white p-6 rounded-lg shadow-xl relative">
+        <h2 id="tourney-title" class="text-2xl font-bold text-center text-gray-800 mb-1"></h2>
+        <p id="tourney-subtitle" class="text-center text-gray-500 mb-4"></p>
+        <div class="coach-comment text-sm mb-4">
+            👨‍練 <strong>コーチ:</strong> <span id="tourney-coach-message"></span>
+        </div>
+        <div class="max-h-[400px] overflow-y-auto border border-gray-200 rounded">
+            <table class="w-full">
+                <thead><tr><th class="py-2">順位</th><th class="py-2">大学</th><th class="py-2">選手</th><th class="py-2">タイム</th><th class="py-2">備考</th></tr></thead>
+                <tbody id="tourney-table-body"></tbody>
+            </table>
+        </div>
+        <div class="text-center mt-6"><button id="tourney-next-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded shadow-lg text-lg w-full md:w-auto min-w-[250px]"></button></div>
+    </div>
+
+    <div id="screen-relay" class="screen bg-white p-6 rounded-lg shadow-xl">
+        <h2 id="relay-title" class="text-2xl font-bold text-center text-gray-800 mb-4">マイルリレー リザルト</h2>
+        <div id="relay-results-container" class="max-h-[450px] overflow-y-auto border border-gray-200 p-3 rounded bg-gray-50"></div>
+        <div class="coach-comment text-sm mb-4 mt-4">
+            👨‍練 <strong>コーチ:</strong> <span id="relay-coach-message"></span>
+        </div>
+        <div class="text-center mt-6"><button onclick="closeTournamentScreen()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded shadow-lg text-lg w-full md:w-auto min-w-[250px]">次のシーズンへ</button></div>
+    </div>
+
+    <div id="screen-result" class="screen bg-white p-6 rounded-lg shadow-xl">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 pb-2">🏁 4年間の最終結果</h2>
+        
+        <div id="ranking-registration-area" class="bg-yellow-50 border border-yellow-300 p-4 rounded mb-6 text-center shadow-sm hidden">
+            <h3 class="font-bold text-yellow-800 mb-2">🏅 殿堂入りランキングに登録！</h3>
+            <p id="ranking-reg-desc" class="text-sm text-gray-600 mb-3"></p>
+            <input type="text" id="ranking-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border p-2 rounded mr-2 w-48 text-center" value="ハルノスケ">
+            <button id="ranking-reg-btn" onclick="registerToRanking()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow">登録する</button>
+        </div>
+        <div class="text-center mb-6">
+            <button onclick="openRankingModal()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded shadow">🏆 ランキングを見る</button>
+        </div>
+
+        <div class="mb-4">
+            <label class="font-bold mr-2">表示する選手:</label>
+            <select id="result-agent-select" class="p-2 border rounded" onchange="drawResult()"></select>
+        </div>
+        <div class="bg-gray-50 p-4 border border-gray-200 rounded mb-4 shadow-sm">
+            <h3 id="result-chart-title" class="text-lg font-bold mb-2">📈 4年間の軌跡</h3>
+            <div class="relative h-64 w-full">
+                <canvas id="resultChart"></canvas>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-4 mb-6">
+            <div class="flex-grow min-w-[300px] bg-gray-50 p-4 border border-gray-200 rounded shadow-sm">
+                <div class="relative h-72 w-full">
+                    <canvas id="raceChart"></canvas>
+                </div>
+            </div>
+            <div class="flex-1 min-w-[280px] bg-gray-50 p-4 border border-gray-200 rounded shadow-sm max-h-[350px] overflow-y-auto">
+                <table class="w-full text-xs">
+                    <thead><tr><th class="py-1">大会</th><th class="py-1">順位</th><th class="py-1">タイム</th></tr></thead>
+                    <tbody id="race-records-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-800">👥 自大学 最終リザルト</h3>
+        <div class="overflow-x-auto border border-gray-200 rounded shadow-sm">
+            <table class="w-full">
+                <thead><tr><th class="py-2">順位</th><th class="py-2">名前</th><th class="py-2">最終PB</th><th class="py-2">獲得資金(円)</th></tr></thead>
+                <tbody id="final-table-body"></tbody>
+            </table>
+        </div>
+        <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
+            <button onclick="location.reload()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg w-full md:w-auto">最初からプレイする</button>
+            <button onclick="startNewGamePlus()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg w-full md:w-auto">強くてニューゲーム<br><span class="text-xs font-normal">(資金・投資引継ぎ)</span></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if(window.initFirebaseAuth) window.initFirebaseAuth();
+    });
+
+    function triggerConfetti(isWorld = false) {
+        let colors = isWorld ? ['#f1c40f', '#f39c12', '#ffeaa7', '#ffffff'] : ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6'];
+        for(let i=0; i< (isWorld ? 250 : 150); i++){
+            let div = document.createElement('div');
+            div.style.position = 'fixed';
+            div.style.top = '-20px';
+            div.style.left = Math.random() * 100 + 'vw';
+            let size = Math.random()*12+6;
+            div.style.width = size + 'px';
+            div.style.height = size + 'px';
+            div.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+            if(isWorld && Math.random() > 0.5) div.style.borderRadius = '50%';
+            div.style.zIndex = '100001';
+            div.style.animation = `fall ${Math.random()*2+2.5}s linear forwards`;
+            div.style.transform = `rotate(${Math.random()*360}deg)`;
+            document.body.appendChild(div);
+            setTimeout(()=>div.remove(), 6000);
+        }
+    }
+
+    function playChampCelebration(type) {
+        let overlay = getEl('champ-celeb');
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'flex';
+        let textEl = getEl('champ-text');
+        let bgEl = getEl('champ-whiteout');
+        
+        let champText = type === 'JAPAN' ? "JAPAN<br>CHAMPION" : "WORLD<br>CHAMPION";
+        
+        textEl.innerHTML = champText;
+        textEl.className = "text-center text-6xl md:text-8xl font-black text-white drop-shadow-[0_15px_15px_rgba(0,0,0,0.8)] anim-smash leading-tight";
+        bgEl.className = "absolute inset-0 bg-white anim-flash";
+        triggerConfetti(type === 'WORLD');
+        
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none';
+        }, 4000);
+    }
+
+    function showCelebration(time, clearStr) {
+        getEl('celeb-modal-overlay').classList.remove('hidden');
+        getEl('celeb-modal-overlay').style.display = 'block';
+        getEl('celeb-modal').classList.remove('hidden');
+        getEl('celeb-modal').style.display = 'flex';
+        
+        let msg = `ハルノスケを世界最強まで育ててくれてありがとう！<br>現実のハルノスケも最後まで陸上頑張ります！<br>今度会った時に感想教えてね`;
+        if (time >= 43.03) {
+            msg += `<br><br><span class="text-xs text-red-600 font-bold">※次は世界記録(43.03秒未満)の更新を目指してね！</span>`;
+        }
+        getEl('celeb-msg').innerHTML = msg;
+        getEl('celeb-rta-time').innerText = clearStr;
+        
+        let btn = getEl('celeb-reg-btn');
+        let viewBtn = getEl('celeb-view-ranking-btn');
+        if(window.hasRegisteredRTA) {
+            btn.disabled = true;
+            btn.innerText = "登録済み";
+            btn.className = "bg-gray-500 text-white font-bold py-2 px-4 rounded shadow-md cursor-not-allowed w-full text-sm";
+            viewBtn.style.display = 'block';
+        } else {
+            btn.disabled = false;
+            btn.innerText = "送信してランキングに登録";
+            btn.className = "bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-md transition-transform transform hover:scale-105 w-full text-sm";
+            viewBtn.style.display = 'none';
+        }
+    }
+
+    async function registerRTAFromCeleb() {
+        if(window.hasRegisteredRTA) return;
+        let name = getEl('celeb-player-name').value.trim() || '名無し';
+        let btn = getEl('celeb-reg-btn');
+        btn.disabled = true;
+        btn.innerText = "送信中...";
+
+        const loop = state.loopCount || 1;
+        const yearNum = state.year || 1;
+        const season = state.seasonIndex || 0;
+        const totalTurns = ((loop - 1) * 16) + ((yearNum - 1) * 4) + (season + 1);
+        const seasonNames = ["春", "夏", "秋", "冬"];
+        const displayString = `人生${loop}周目 ${yearNum}年目 ${seasonNames[season]} (計${totalTurns}ターン)`;
+
+        let entry = { name: name, val: Number(totalTurns), text: displayString, date: new Date().toLocaleDateString() };
+        
+        let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
+        if(!r.rta) r.rta = [];
+        r.rta.push(entry);
+        r.rta.sort((a,b) => Number(a.val) - Number(b.val));
+
+        let onlineSuccess = false;
+        if (window.saveRankingOnline) {
+            try { onlineSuccess = await window.saveRankingOnline('rta', entry); } catch(e) {}
+        }
+
+        localStorage.setItem('tfs_rankings', JSON.stringify(r));
+        window.hasRegisteredRTA = true;
+
+        btn.innerText = "登録完了！";
+        btn.className = "bg-gray-500 text-white font-bold py-2 px-4 rounded shadow-md cursor-not-allowed w-full text-sm";
+        getEl('celeb-view-ranking-btn').style.display = 'block';
+        showToast(onlineSuccess ? "👑 オンラインランキング登録成功！" : "ローカル登録しました", "success");
+    }
+
+    function closeCelebModal() {
+        getEl('celeb-modal-overlay').classList.add('hidden');
+        getEl('celeb-modal-overlay').style.display = 'none';
+        getEl('celeb-modal').classList.add('hidden');
+        getEl('celeb-modal').style.display = 'none';
+    }
+
+    function showHelpModalCustom(title, descHtml) {
+        getEl('help-title').innerText = title;
+        getEl('help-desc').innerHTML = descHtml;
+        getEl('help-modal-overlay').classList.remove('hidden');
+        getEl('help-modal-overlay').style.display = 'block';
+        getEl('help-modal').classList.remove('hidden');
+        getEl('help-modal').style.display = 'block';
+    }
+
+    const getEl = id => document.getElementById(id);
+    const randn = (mean, sd) => mean + sd * Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * (1 - Math.random()));
+    const fmt = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
+    const log = m => getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2">${m}</div>`);
+    const showToast = (html, cls="info") => {
+        let tc = getEl('toast-container');
+        if(!tc) return;
+        tc.innerHTML = `<div class="toast ${cls}">${html}</div>`;
+        tc.style.display = 'block';
+        setTimeout(() => tc.style.display = 'none', 2500);
+    };
+
+    const helpTexts = {
+        ability: { t: "走力とは？", d: "現在の調子や疲労を無視した純粋な「ベースの速さ」です。練習で成長しますが、レースではこれに調子や怪我のペナルティが加算されます。" },
+        fatigue: { t: "疲労度とは？", d: "0〜10の値で表され、高いほど怪我をする確率が二次関数的に跳ね上がります。" },
+        effort: { t: "総努力量とは？", d: "2.0〜10.0の範囲で設定する練習の全体量です。高いほど走力が伸びやすいですが、疲労度が急激に蓄積し怪我のリスクが高まります。" },
+        meets: { t: "記録会出場とは？", d: "夏の期間に出場する記録会の回数です。出場するほど自己ベスト更新のチャンスが増えますが、1回ごとに大きな疲労が蓄積します。" },
+        strategy: { t: "レース展開とは？", d: "レースでのペース配分です。先行型は前半から突っ込み、後半型はラストスパートにかけます。"},
+        qualifying: { t: "資格記録とは？", d: "昨シーズンまたは今シーズンに出した最も良いタイムです。各大会に出場するには、この有効な資格記録が標準記録を突破している必要があります。"},
+        'prize-meet': { t: "夏・グランプリとは？", d: "夏に開催されるオープン大会です。参加標準記録は<strong class='text-red-500'>47.00秒</strong>、参加費が10,000円かかりますが、好記録が出やすく(-0.20秒)、実業団などのシニア選手が出場するため高いレベルのレースが経験できます。上位入賞で高額な賞金が得られます。" }
+    };
+
+    function showHelp(key) {
+        if(helpTexts[key] && getEl('help-title')) {
+            getEl('help-title').innerText = helpTexts[key].t;
+            getEl('help-desc').innerHTML = helpTexts[key].d;
+            getEl('help-modal-overlay').classList.remove('hidden');
+            getEl('help-modal-overlay').style.display = 'block';
+            getEl('help-modal').classList.remove('hidden');
+            getEl('help-modal').style.display = 'block';
+        }
+    }
+    function closeHelpModal() {
+        if(getEl('help-modal-overlay')) { getEl('help-modal-overlay').classList.add('hidden'); getEl('help-modal-overlay').style.display = 'none'; }
+        if(getEl('help-modal')) { getEl('help-modal').classList.add('hidden'); getEl('help-modal').style.display = 'none'; }
+    }
+
+    const UNIVS = ["筑波大学", "早稲田大学", "順天堂大学", "日本大学", "東海大学", "法政大学", "東洋大学", "中央大学", "日本体育大学", "慶應義塾大学", "城西大学"];
+    const FOREIGN_NAMES = ["ボルト", "バンニーキルク", "ジョンソン", "ウォリナー", "メリット", "ウォルシュ", "ノーマン", "ライルズ", "コールマン", "ゲイ", "パウエル", "ブレーク", "マクワラ", "ジェームス", "ブラウン", "カーリー", "デグラス", "トンプソン", "ヒューズ", "シンビネ", "オドゥドゥル", "トルトゥ", "ヤコブス"];
+    const ATHLETE_NAMES = Array.from(new Set([
+        "佐藤", "鈴木", "高橋", "田中", "伊藤", "渡辺", "山本", "中村", "小林", "加藤", "吉田", "山田", "佐々木", "山口", "松本", "井上", "木村", "林", "斎藤", "清水", "山崎", "森", "池田", "橋本", "阿部", "石川", "山下", "中島", "石井", "小川", "前田", "岡田", "長谷川", "藤田", "後藤", "近藤", "村上", "遠藤", "青木", "坂本", "斉藤", "福田", "太田", "西村", "藤井", "金子", "岡本", "藤原", "中野", "三浦", "原田", "松田", "竹内", "中川", "平野", "中山", "石田", "武田", "市川", "小野", "菅原", "宮崎", "千葉", "和田", "大久保", "木下", "小島", "上田", "村田", "谷口", "高田", "松井", "今井", "小山", "荒木", "松尾", "野村", "菊地", "大西", "桜井", "新井", "渡部", "水野", "吉川", "山内", "西田", "宇野", "小松", "内田", "平井", "安藤", "五十嵐", "秋山", "広瀬", "中田", "本田", "横山", "久保", "宮本", "浅野", "川村", "野口", "松山", "石原", "大塚", "松崎", "大野", "菅野", "杉山", "西川", "大谷", "上野", "宮田", "大橋", "川島", "須藤", "関", "吉村", "石橋", "篠原", "高木", "青山", "小泉", "大島", "大城", "白石", "村山", "森田", "片山", "黒田", "小野寺", "杉本", "柴田", "星野", "秋田", "浅海", "飯島", "池上", "石黒", "石崎", "泉", "磯部", "板垣", "市村", "稲垣", "稲田", "今村", "岩崎", "岩田", "岩本", "植田", "内海", "大木", "大澤", "大竹", "大坪", "大森", "大山", "小笠原", "緒方", "奥田", "奥村", "小澤", "小野田", "香川", "柿崎", "笠原", "柏木", "片岡", "勝又", "金沢", "神谷", "川上", "川口", "川崎", "河村", "神田", "菊池", "岸", "岸本", "木島", "北川", "北村", "木原", "清田", "熊谷", "黒木", "黒沢", "小出", "高坂", "河野", "小坂", "小西", "小早川", "小宮", "小森", "西郷", "坂口", "坂田", "佐久間", "桜木", "笹川", "佐野", "塩沢", "島田", "白井", "白鳥", "杉浦", "須田", "関口", "関根", "相馬", "高山", "滝沢", "竹村", "竹本", "田島", "橘", "谷川", "田村", "千田", "辻", "土屋", "筒井", "角田", "手塚", "寺田", "寺本", "土井", "戸田", "富田", "外山", "豊田", "内藤", "中井", "中西", "中原", "長尾", "長岡", "長沢", "長島", "長田", "長野", "新山", "新田", "二宮", "西", "西尾", "西山", "野崎", "野沢", "野島", "野田", "野中", "長谷", "服部", "花田", "浜田", "早川", "原", "原口", "半田", "馬場", "日高", "平岡", "平田", "福井", "福岡", "福島", "藤川", "藤木", "藤崎", "藤沢", "藤本", "古川", "星", "細川", "堀", "堀内", "前川", "牧野", "増田", "町田", "松浦", "松岡", "松下", "松島", "松原", "松村", "丸山", "三田", "光井", "皆川", "南", "三村", "宮川", "三宅", "宮沢", "向井", "村松", "森川", "森下", "森本", "森山", "矢口", "八木", "矢島", "安田", "柳", "柳沢", "柳田", "矢野", "山川", "山中", "山根", "山村", "結城", "横田", "吉野", "吉本",
+        "桐生", "山縣", "サニブラウン", "小池", "多田", "飯塚", "藤光", "ケンブリッジ", "柳田", "鵜澤", "上山", "水久保", "東田", "坂井", "本郷", "佐藤拳", "佐藤風", "高野", "為末", "伊東", "末續"
+    ]));
+    let athleteNamesPool = [];
+
+    const getAthleteName = () => {
+        if (athleteNamesPool.length === 0) {
+            athleteNamesPool = [...ATHLETE_NAMES].sort(() => Math.random() - 0.5);
+        }
+        return athleteNamesPool.pop();
+    };
+
+    const getForeignName = () => {
+        return FOREIGN_NAMES[Math.floor(Math.random() * FOREIGN_NAMES.length)];
+    }
+
+    const SHOP = {
+        care: {
+            costs: [0, 3000, 10000, 30000, 50000, 100000, 200000, 300000, 500000, 600000, 800000],
+            effects: [0, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.55, 0.60, 0.70],
+            names: ["なし", "アイシングパック", "マッサージポール", "アミノ酸サプリセット", "筋膜リリースガン", "スポーツマッサージ(定期)", "超音波治療器", "専属トレーナー契約", "遠赤外線サウナ導入", "低酸素テント", "高気圧酸素カプセル"]
+        },
+        spike: {
+            costs: [0, 5000, 15000, 30000, 50000, 100000, 200000, 300000, 500000, 600000, 800000],
+            effects: [0, 0.02, 0.05, 0.10, 0.15, 0.25, 0.35, 0.45, 0.55, 0.60, 0.70],
+            names: ["なし", "土用スパイク", "シティウスウイング", "SPBlade", "スーパーフライエリート", "プライムSP3", "プライムSP5", "オーダースパイク", "キック力増強シューズ", "超改造脚", "完全生命体"]
+        }
+    };
+    
+    let careLevel = 0;
+    let spikeLevel = 0;
+    let usedSpecialFood = false;
+    let currentPhaseTracker = '';
+
+    let agents = [], pId = 0, year = 1, phase = 'spring-sel', curTourney, curQuals = [], isRelay = false, animReq, raceData = [], rStart, rDone;
+    let curRelayData = []; 
+    let charts = {};
+    let modalChart = null;
+    let myUnivIdCounter = 11;
+    let ngpData = null;
+
+    let lastAnimTime = 0;
+    let raceElapsedTime = 0;
+
+    let playerInitialPB = 0;
+    let totalEarnedMoney = 0;
+    let injuryCount = 0;
+    let phaseCount = 0;
+    let gameClearRTA = 0;
+    let clearTimeString = '';
+    let isNGPFlag = false;
+    let hasClearedThisRun = false;
+    let hasRegisteredRanking = false;
+    window.hasRegisteredRTA = false;
+    let loopCount = 1;
+
+    const state = {
+        get loopCount() { return loopCount; },
+        get year() { return year; },
+        get seasonIndex() {
+            const map = { 'spring-sel':0, 'spring-main':0, 'japan-champ':1, 'summer-prac':1, 'autumn-sel':2, 'autumn-main':2, 'intl-champ':2, 'winter':3, 'new-year':3 };
+            return map[phase] !== undefined ? map[phase] : 0;
+        }
+    };
+
+    class Agent {
+        constructor(id, initialTime, isPlayer, univName, strat, name) {
+            this.id = id;
+            this.isPlayer = isPlayer;
+            this.univ = univName;
+            this.name = isPlayer ? "ハルノスケ" : name;
+            this.pb = initialTime;
+            this.qualifyingRecord = initialTime; 
+            this.currentSeasonBest = 99.99;      
+            this.ability = initialTime + Math.abs(randn(0.15, 0.1));
+            this.lastTime = initialTime; 
+            this.fatigue = 0.0;
+            this.isInjured = false;
+            this.money = isPlayer ? 100000 : 0; 
+            this.hist = []; 
+            this.logs = []; 
+            this.recFlags = {}; 
+            this.cond = 0.0;
+            this.strat = strat || ["FRONT", "EVEN", "BACK"][Math.floor(Math.random()*3)];
+            this.isActive = true; 
+            this.grade = 1;       
+        }
+        
+        runRace(pen = 1, isR = false, fly = 0) {
+            this.cond = this.cond * 0.6 + randn(0, 0.2); 
+            let spikeBuff = this.isPlayer ? (SHOP.spike.effects[spikeLevel] || 0) : 0;
+            let t = this.ability - spikeBuff + (this.isInjured ? 1.5 * pen : 0) + this.cond + fly;
+            
+            if(!isR) this.lastTime = t;
+            if (!isR && !this.isInjured) this.currentSeasonBest = Math.min(this.currentSeasonBest, t);
+
+            let isPB = !isR && !this.isInjured && t < this.pb, recM = null;
+            if (isPB) { 
+                this.pb = t; 
+                let msg = null;
+                if (t < 43.03) msg = "🌍 世界新記録！";
+                else if (t < 44.44 && this.univ !== "海外") msg = "🇯🇵 日本新記録！";
+                else if (t < 44.98 && this.grade <= 4) msg = "🎓 学生新記録！";
+                
+                if (msg && !this.recFlags[msg]) {
+                    recM = msg; this.recFlags[msg] = true;
+                    if (this.isPlayer) {
+                        let b = msg === "🌍 世界新記録！" ? 1000000 : msg === "🇯🇵 日本新記録！" ? 500000 : 200000;
+                        this.money += b;
+                        window.totalEarnedMoney += b;
+                        log(`💰 新記録達成ボーナス ${b.toLocaleString()}円を獲得しました！ (残高: ${this.money.toLocaleString()}円)`);
+                    }
+                } else if (this.isPlayer) {
+                    this.money += 20000; 
+                    window.totalEarnedMoney += 20000;
+                    log(`💰 自己ベスト更新ボーナス 20,000円を獲得しました！ (残高: ${this.money.toLocaleString()}円)`);
+                }
+            }
+            let br = this.strat === "FRONT" ? [0.23,0.24,0.26,0.27] : this.strat === "BACK" ? [0.25,0.25,0.24,0.26] : [0.24,0.25,0.25,0.26];
+            let nr = br.map(r => r + randn(0, 0.015)), sum = nr.reduce((a,b)=>a+b,0), cum = 0;
+            return { time: t, isPB: isPB, diff: (this.ability - spikeBuff) - t, segs: nr.map(r => cum += t * (r/sum)), recM };
+        }
+    }
+
+    const coachComments = {
+        first_look: ["お前が今年の新人か。プロを目指すなら、まずは結果で示せ。","初期資金は10万円だ。賢く投資して上を目指せよ。","自己ベスト更新や大会での活躍が『金』になる。プロの世界へようこそ。","体つきは悪くないな。まずはそのPBを超えて金を稼げ。"],
+        inj_1_2: ["めっちゃ足流れてたもんな。当然だ。","怪我したのが今でよかったな。遅かれ早かれやると思ってた。","痛いアピールはいらないよ。自己管理も実力のうちだ。"],
+        inj_3: ["一番伸びる時期に何やってるんだ。これじゃスポンサーもつかんぞ。","お前が抜けた穴を後輩が埋めるんだぞ。不甲斐ないと思え。","ピーキングの概念をまだ理解してないのか。休むのも練習だ。"],
+        inj_4: ["最後の年だぞ？引退までリハビリルームで過ごすつもりか。","4年間の集大成が故障か。プロへの道は厳しいぞ。","悲劇のヒロインぶるな。自分が招いた結果だろ。早く治せ。"],
+        win_inj: ["痛みを堪えての優勝か…お前、本当にバケモンだな！", "怪我しながら勝つなんて前代未聞だ。早く治療しろよ！"],
+        med_inj: ["怪我しながら表彰台に乗るとは。執念のメダルだな。", "満身創痍でよく食らいついた。まずはしっかり休め。"],
+        qualified_inj: ["怪我を押してよく枠を勝ち取ったな。本戦までに少しでも治せよ。","満身創痍で通過とは…プロの執念を見せてもらったぞ。"],
+        not_qualified_inj: ["怪我してるんだから無理するな。今は治すことが最優先だ。", "万全なら通ってたはずだ。焦らずに治せ。"],
+        pb_first: ["大学初のベストか。賞金が入ったな。自己投資に回せ。","ようやくスタートラインだ。勘違いして浮かれるなよ。","初任給みたいなもんだ。無駄遣いせずにスパイクでも買え。"],
+        pb_1_2: ["ベスト更新か。金稼いでスパイクでも買い替えろ。","まずはおめでとう。調子乗るなよ、まだまだ上がいるぞ。","少しはマシな走りになったな。この調子でタイムを削れ。"],
+        pb_3: ["ようやく上級生らしいタイムが出たな。いい士気上げだ。","意地を見せたな。これをコンスタントに出せないと意味がないぞ。","この時期のPBは価値がある。プロを意識してさらに上を目指せ。"],
+        pb_4: ["最後の最後でようやく殻を破ったか。もっと早くやれ。","引退間近で自己満のタイム出して嬉しいか？結果を残せ。","意地の自己ベストだな。残りの競技人生、悔いのないように走れ。"],
+        pb_long: ["長かったな。この1秒を削り出すのにどれだけ時間かけたか考えろ。","どん底から這い上がったな。ここから巻き返せ。","スランプ脱出か。腐らずに続けたことは評価してやる。"],
+        under_1_2: ["なんだそのチキンレースは。金払って出場してる自覚を持て。","周りに飲まれて自分の走りを見失うとは。アマチュア以下だ。","プレッシャーに負けてどうする。プロの世界はもっと厳しいぞ。"],
+        under_3_4: ["上級生がそのザマか。まだピーキングもできないのか。","大事な場面でこのタイム…。お前にはもう期待しない方がいいか。","情けない走りだ。後輩に示しがつかないだろうが。"],
+        placement_jp: ["日本選手権での入賞、見事だ。実業団のスカウトも注目してるぞ。", "日本のトップレベルに名を連ねたな！"],
+        placement_intl: ["世界レベルで入賞とは恐れ入った。次はメダルを狙えるぞ！", "世界のトップ8に入るなんて信じられない。日本の誇りだ！"],
+        over: ["条件が良かったな。地力を伸ばせ。", "速い選手じゃなくて強い選手を目指せ。", "運も実力のうちと言うが、たまたまハマっただけだ。勘違いするな。"],
+        win_春インカレ_1_2: ["下級生で春インカレ制覇とは恐れ入った。だが勝負の夏はこれからだぞ。","春から最高の滑り出しだ！賞金でしっかり自己投資しろよ。","鮮烈なインカレデビューだな。他大のマークが厳しくなるぞ。"],
+        win_春インカレ_3_4: ["さすが上級生。チームに最高の勢いをもたらしてくれたな！","春インカレ優勝！これで今年一年の主導権を握ったな。","貫禄の勝利だ。このまま秋まで無敗で駆け抜けろ。"],
+        med_春インカレ_1_2: ["春で表彰台なら上出来だ。秋にはてっぺんを狙え。","インカレのメダルおめでとう。次は色を金に変えろよ。","ルーキーにしてはよくやった。賞金でケア道具でも買っておけ。"],
+        med_春インカレ_3_4: ["悪くないが、お前には優勝してほしかった。悔しさを次に繋げ。","メダルは取れたが、お前が目指す場所はそこじゃないはずだ。","意地の表彰台だな。夏でしっかり鍛え直してこい。"],
+        win_秋インカレ_1_2: ["秋の大舞台で優勝か！来年のエースはお前で決まりだな。","インカレ王者おめでとう！若きプロスペクトの誕生だ！","完璧なピーキングだったな。この経験は必ず将来に活きるぞ。"],
+        win_秋インカレ_3_4: ["完璧なレースだった。インカレ王者の名に恥じない走りだ！","有終の美を飾ったな。大学陸上の頂点、しっかり目に焼き付けておけ。","これぞ上級生の走りだ！チームに最高の栄誉をもたらしてくれた。"],
+        med_秋インカレ_1_2: ["秋にメダルを取れるなら来年は優勝できる。冬の練習に懸けろ。","インカレの表彰台、よく登り詰めた。だが、まだ上がいるぞ。","この悔しさを忘れるな。来年は一番高いところに立て。"],
+        med_秋インカレ_3_4: ["意地のメダルだな。後輩たちに良い刺激を与えてくれた。","インカレの表彰台、見事だった。4年間の努力が報われたな。","悔しさもあるだろうが、大学陸上をやり切った自分を褒めてやれ。"],
+        win_日本選手権_1_2: ["学生が日本一だと！？歴史的快挙だ、今日は好きなだけ喜べ！","とんでもない化け物が生まれたな…日本陸上界の未来は明るいぞ。","日本の頂点か！実業団の連中もさぞ驚いただろうな。"],
+        win_日本選手権_3_4: ["日本の頂点…よくここまで登り詰めた。お前を誇りに思うよ。","ついに日本一か！これでプロのスカウトが殺到するぞ！","お前の4年間は日本の頂点を取るためのものだったんだな。見事だ。"],
+        med_日本選手権_1_2: ["日本選手権でメダル！？お前、本当に俺の教え子か？","学生で日本選手権の表彰台に立つとは…末恐ろしい才能だ。","日本のトップ３入りおめでとう。世界が少し近づいたな。"],
+        med_日本選手権_3_4: ["日本のトップレベルに通用したな。実業団からも声がかかるぞ。","日本選手権でのメダル、立派な実績だ。プロへの道が拓けたな。","あのメンバー相手によく食らいついた。プロの世界で戦える証明だ。"],
+        win_夏・グランプリ_1_2: ["シニア相手に優勝！？とんでもない番狂わせを起こしたな！","プロをなぎ倒しての優勝！お前のポテンシャルは計り知れん。","高額賞金ゲットだな。これで最高のスパイクが買えるぞ！"],
+        win_夏・グランプリ_3_4: ["プロ相手に堂々の優勝だ。賞金もガッツリ稼いだな。","実業団の連中を黙らせたな。お前はもうプロと同格だ。","グランプリ制覇おめでとう！この勢いで秋も頼むぞ。"],
+        med_夏・グランプリ_1_2: ["シニア選手相手によく食らいついた。良い経験になったな。","プロの洗礼を浴びつつもメダル獲得、大金星だ。","このレベルで戦えたのは自信になるはずだ。さらに上を目指せ。"],
+        med_夏・グランプリ_3_4: ["プロに混じっての表彰台は見事だ。秋に向けて弾みがついたな。","賞金大会でしっかり稼いでくるとは、さすがだ。","実業団のトップ連中と肩を並べたな。良いレースだった。"],
+        win_国際大会_1_2: ["若くして世界を制するとは…お前の才能に限界はないのか。","世界一だ！！日本陸上界の新たな歴史がここから始まるぞ！","信じられん…本当に世界一になりやがった。最強の教え子だ。"],
+        win_国際大会_3_4: ["世界一だ。お前の集大成としてこれ以上のものはない！","世界の頂点…お前と一緒に夢を見られて幸せだったよ。","全てはこの日のためだったんだな。世界王者、おめでとう！！"],
+        med_国際大会_1_2: ["世界大会でメダル！？日本陸上界の宝だな。","世界の表彰台に立つお前の姿、鳥肌が立ったよ。","世界に名前を轰かせたな。次は世界の頂点だ！"],
+        med_国際大会_3_4: ["世界の表彰台に立つ姿を見られるとは…コーチ冥利に尽きるよ。","世界でメダル獲得！お前の努力が世界に認められたんだ。","最高の走りだった。世界トップクラスの称号を胸に刻め。"],
+        win: ["つくばんざい！つくばんざい！つくつくつくつくつくばんざい！！！","完璧なレース展開だった。文句なしの優勝だ！","圧倒的な走りだったな。誰も前を走らせなかった、素晴らしい！"],
+        med: ["よくやった。賞金で美味いもんでも食え。いや、自己投資しろ。","表彰台に乗って満足そうな顔するな。次はてっぺん取れ。","メダル獲得おめでとう。だが俺はお前が真ん中に立つ姿を見たいんだ。"],
+        relay_1_2: ["下級生らしい勢いのあるラップだったぞ。","チームの勢いを加速させたな。よくやった。","先輩たちにしっかりついていったな。合格点だ。"],
+        relay_3_4: ["上級生の意地を見せたな。リレーでもエースの走りだ。","チームを引っ張る素晴らしいラップだった。","これぞ頼れる先輩の走りだ。後輩たちも刺激を受けたはずだ。"],
+        rec_student: ["🎓 学生新記録！大学陸上界に名を刻んだな。"],
+        rec_japan: ["🇯🇵 日本新記録！ついに日本の歴史を塗り替えたな。"],
+        rec_japan_日本選手権: ["🇯🇵 日本選手権の大舞台で日本新記録樹立！歴史に残る快挙だ！"],
+        rec_japan_国際大会: ["🇯🇵 世界大会での日本新！この記録は日本の陸上史に永遠に刻まれるぞ！"],
+        rec_world: ["🌍 世界新記録だと！？人類の限界を超えたぞ！"],
+        rec_world_国際大会: ["🌍 世界大会で世界新記録…！？お前は神か！！神の領域だ！！"],
+        effort_low_summer: ["サボって金が稼げるほどプロは甘くないぞ。","やる気がないならさっさと枠を譲れ。邪魔だ。","その程度の練習じゃ、秋の大会はスタンドから応援だな。"],
+        effort_low_winter: ["冬の走り込みをサボる奴に春は来ないぞ。","寒さに負けてジョグで終わらせてるようじゃ、来年も同じタイムだ。","ベース作りをサボってどうする。来年は記録更新なしだな。"],
+        effort_high_summer: ["夏場にそんな無理したらぶっ倒れるぞ。ケア道具は買ったか？","限界の先を見たけりゃ、もっと賢くやれ。","狂ったように練習してるな。オーバーワークで潰れるなよ。"],
+        effort_high_winter: ["冬にそこまで追い込むのはいいが、春まで持たないぞ。","量に逃げるな。質を考えた冬にしろ。","ストイックなのはいいが、怪我をしたら全てが水の泡だぞ。"],
+        effort_normal_summer: ["無難な練習ばっかだな。無難な夏でいいのか。","いい感じだ。そのまま調子を維持しろ。","順調にメニューをこなしてるな。夏バテには気をつけろよ。"],
+        effort_normal_winter: ["地道な積み重ねは評価する。だが殻を破る瞬間が必要だ。","無難な冬季練習だな。来春も無難なタイムしか出ないぞ。","悪くはない。だがトッププロはもっと追い込んでいるぞ。"],
+        qualified_1_2: ["下級生で代表枠を勝ち取ったか。だが参加するだけじゃ意味がないぞ。","よくやった。だが本番はこれからだ。先輩の胸を借りるつもりで走れ。","ここからが本当の勝負だ。大学のトップレベルを肌で感じてこい。"],
+        qualified_3_4: ["上級生としての意地を見せたな。本戦でも頼むぞ。","当然の結果だ。お前がチームを引っ張らなきゃ誰がやるんだ。","お前の走りでチームに勢いをつけてこい。期待してるぞ。"],
+        skip_日本選手権: ["日本選手権の標準も切れないとはな。夏に死ぬ気で走力上げろ。", "この舞台にすら立てない現実をしっかり噛み締めろ。"],
+        skip_国際大会: ["世界への切符は甘くない。冬に地獄を見る覚悟はあるか？", "世界は遠かったな。来年は必ずその切符を掴み取れ。"],
+        not_qualified_1_2: ["スタンドからの応援、悔しいか？来年はトラックに立て。","これがレベルの差だ。自分の現在地を知るいい機会になったな。","今はただ声を枯らせ。来年は実力で枠を奪い取れ。"],
+        not_qualified_3: ["後輩に枠を奪われて恥ずかしくないのか？意地を見せろ。","もう『来年がある』なんて甘い言葉は通用しない時期だぞ。","チームを引っ張るべき3年が何やってるんだ。情けない。"],
+        not_qualified_4: ["最後の年でスタンドか。これが4年間のお前の実力だ。","出られないお前の分まで走る仲間のために声を出せ。","引退までサポートに徹しろ。それがお前の最後の仕事だ。"]
+    };
+
+    const getRandomComment = (category) => {
+        const comments = coachComments[category] || coachComments.effort_normal_summer;
+        return comments[Math.floor(Math.random() * comments.length)];
+    };
+
+    const getRecEvent = (recM, tName) => {
+        let base = "rec_student";
+        if(recM.includes("世界")) base = "rec_world";
+        else if(recM.includes("日本")) base = "rec_japan";
+        
+        if (tName && coachComments[`${base}_${tName}`]) {
+            return `${base}_${tName}`;
+        }
+        return base;
+    };
+
+    const upCoach = (ev, e = 5, tName = null) => {
+        let p = agents[pId];
+        let grade = p ? p.grade : 1;
+        let isWinter = phase === 'winter' || phase === 'new-year';
+        let gradeGrp = grade <= 2 ? '1_2' : '3_4';
+        let isInjured = p ? p.isInjured : false;
+        
+        let category = 'effort_normal_summer';
+
+        if (ev === 'first_look') category = 'first_look';
+        else if (ev === 'win') category = isInjured ? 'win_inj' : 'win';
+        else if (ev === 'med') category = isInjured ? 'med_inj' : 'med';
+        else if (ev.startsWith('rec_')) category = ev;
+        else if (ev === 'inj' || (isInjured && ['over', 'under', 'pb', 'normal_effort'].includes(ev))) category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
+        else if (ev === 'skip') category = `skip_${tName}` in coachComments ? `skip_${tName}` : 'not_qualified_1_2';
+        else if (ev === 'pb') {
+            let pbCount = p.logs.filter(l => l.pb).length;
+            let recentPbs = p.logs.slice(-3).filter(l => l.pb).length;
+            if (pbCount === 1) category = 'pb_first';
+            else if (recentPbs === 0 && p.logs.length > 5) category = 'pb_long';
+            else if (grade <= 2) category = 'pb_1_2';
+            else if (grade === 3) category = 'pb_3';
+            else category = 'pb_4';
+        } else if (ev === 'over') {
+            if (tName === '日本選手権') category = 'placement_jp';
+            else if (tName === '国際大会') category = 'placement_intl';
+            else category = 'over';
+        } else if (ev === 'under') category = `under_${gradeGrp}`;
+        else if (ev === 'relay') category = `relay_${gradeGrp}`;
+        else if (ev === 'not_qualified') category = isInjured ? 'not_qualified_inj' : (grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4');
+        else if (ev === 'qualified') category = isInjured ? 'qualified_inj' : `qualified_${gradeGrp}`;
+        else {
+            let suffix = isWinter ? '_winter' : '_summer';
+            if (e >= 8.0) category = 'effort_high' + suffix;
+            else if (e <= 4.0) category = 'effort_low' + suffix;
+            else category = 'effort_normal' + suffix;
+        }
+
+        if (tName && !isInjured && ['win', 'med', 'over', 'under', 'qualified', 'not_qualified'].includes(category.split('_')[0])) {
+            let baseEv = category.split('_')[0];
+            let specKey1 = `${baseEv}_${tName}_${gradeGrp}`;
+            let specKey2 = `${baseEv}_${tName}`;
+            if (coachComments[specKey1]) category = specKey1;
+            else if (coachComments[specKey2]) category = specKey2;
+        }
+
+        let msg = getRandomComment(category);
+        if(getEl('coach-message')) getEl('coach-message').innerHTML = msg;
+        if(getEl('tourney-coach-message')) getEl('tourney-coach-message').innerHTML = msg;
+        if(getEl('relay-coach-message')) getEl('relay-coach-message').innerHTML = msg;
+    };
+
+    function updateRisk() {
+        if(!agents || !agents[pId]) return;
+        let isWinter = phase === 'winter';
+        if (getEl(`input-${isWinter?'winter':'summer'}-e`)) {
+            getEl(`val-${isWinter?'winter':'summer'}-e`).innerText = parseFloat(getEl(`input-${isWinter?'winter':'summer'}-e`).value).toFixed(1);
+        }
+        if (phase !== 'summer-prac' && phase !== 'winter') {
+            if(getEl('risk-container')) getEl('risk-container').classList.add('hidden');
+            return;
+        }
+        if(getEl('risk-container')) getEl('risk-container').classList.remove('hidden');
+        
+        let p = agents[pId];
+        let e = parseFloat(getEl(`input-${isWinter?'winter':'summer'}-e`)?.value) || 6.0;
+        let m = isWinter ? 0 : (parseInt(getEl('input-summer-m')?.value) || 0);
+        let careEff = SHOP.care.effects[careLevel] || 0;
+        let fat_gain = (isWinter ? 0.6 * e : 0.5 * e + 0.6 * m) * (1 - careEff);
+        let fat_new = Math.min(10, p.fatigue * (isWinter ? 0.5 : 0.3) + fat_gain);
+        let inj_prob = Math.min(0.9, Math.pow(fat_new / 10, 2) * (isWinter ? 0.4 : 0.5)) * 100;
+        
+        let color = inj_prob > 30 ? '#e74c3c' : inj_prob > 10 ? '#f39c12' : '#2ecc71';
+        if(getEl('risk-text')) getEl('risk-text').innerHTML = `<span style="color:${color}">${inj_prob.toFixed(1)}%</span>`;
+        if(getEl('risk-bar')) {
+            getEl('risk-bar').style.width = `${Math.min(100, inj_prob)}%`;
+            getEl('risk-bar').style.backgroundColor = color;
+        }
+
+        let sc = p.ability < 44.0 ? 0.1 : p.ability < 45.0 ? 0.3 : p.ability < 46.0 ? 0.6 : p.ability < 47.0 ? 0.8 : 1.0;
+        let exp_imp = (0.05 * e - 0.20) * sc; 
+        let gColor = exp_imp > 0 ? '#2ecc71' : '#e74c3c'; 
+        let gSign = exp_imp > 0 ? '-' : '+';
+        if(getEl('exp-growth-text')) getEl('exp-growth-text').innerHTML = `<span style="color:${gColor}">${gSign}${Math.abs(exp_imp).toFixed(2)}秒</span>`;
+    }
+
+    function buyItem(type) {
+        let p = agents[pId];
+        if (type === 'care') {
+            let cost = SHOP.care.costs[careLevel + 1];
+            if (careLevel < 10 && p.money >= cost) {
+                p.money -= cost; careLevel++;
+                showToast(`ケア道具 Lv.${careLevel} 購入！`, "success");
+                log(`🛒 ケア道具 Lv.${careLevel} を購入しました。 (-${cost.toLocaleString()}円 / 残高: ${p.money.toLocaleString()}円)`);
+            }
+        } else if (type === 'spike') {
+            let cost = SHOP.spike.costs[spikeLevel + 1];
+            if (spikeLevel < 10 && p.money >= cost) {
+                p.money -= cost; spikeLevel++;
+                showToast(`スパイク Lv.${spikeLevel} 購入！`, "success");
+                log(`🛒 スパイク Lv.${spikeLevel} を購入しました。 (-${cost.toLocaleString()}円 / 残高: ${p.money.toLocaleString()}円)`);
+            }
+        } else if (type === 'food') {
+            if (!usedSpecialFood && p.money >= 20000) {
+                p.money -= 20000; usedSpecialFood = true;
+                p.fatigue = Math.max(0, p.fatigue - 1.0); p.ability -= 0.02; 
+                showToast(`特別食で回復！`, "success");
+                log(`🛒 特別食を購入し、疲労回復＆走力アップ！ (-20,000円 / 残高: ${p.money.toLocaleString()}円)`);
+            }
+        }
+        updateUI();
+    }
+
+    function getPrize(tName, rank) {
+        if (rank > 3) return 0;
+        const prizes = {'春インカレ': [50000, 30000, 10000], '秋インカレ': [50000, 30000, 10000], '日本選手権': [200000, 100000, 50000], '夏・グランプリ': [200000, 100000, 50000], '国際大会': [1000000, 500000, 200000]};
+        return prizes[tName] ? prizes[tName][rank - 1] : 0;
+    }
+
+    function determineRelayTeams() {
+        let univs = curTourney.includes('インカレ') ? UNIVS.slice(0,5) : UNIVS;
+        curRelayData = univs.map(u => {
+            let sortedAgents = agents.filter(a=>a.univ===u && a.isActive).map(a => {
+                return { agent: a, score: a.ability + (a.isInjured ? 2.0 : 0) + (a.cond || 0) };
+            }).sort((a,b) => a.score - b.score);
+            let t = sortedAgents.slice(0,4).map(item => item.agent);
+            let pI = t.findIndex(a=>a.isPlayer);
+            let pData = sortedAgents.find(item => item.agent.isPlayer);
+            return { u: u, team: t, pI: pI, myScore: pData ? pData.score : 0, myRank: pData ? sortedAgents.indexOf(pData) + 1 : 0 };
+        });
+    }
+
+    const getValidQualRecord = (a) => Math.min(a.qualifyingRecord, a.currentSeasonBest);
+
+    function recordHistory(label) {
+        agents.filter(a => a.isActive).forEach(a => {
+            let baseAbility = a.ability, spikeBuff = a.isPlayer ? (SHOP.spike.effects[spikeLevel]||0) : 0;
+            a.hist.push({ l: label, ab: baseAbility - spikeBuff, pb: a.pb, money: a.money || 0, inj: a.isInjured });
+        });
+    }
+
+    function setPhase(newPhase) {
+        phase = newPhase;
+        window.phaseCount++;
+        let p = agents[pId];
+        if (p && p.isActive) {
+            if (['spring-sel', 'summer-prac', 'autumn-sel', 'winter'].includes(newPhase)) {
+                p.money += 30000; window.totalEarnedMoney += 30000;
+                log(`💰 親からの仕送り 30,000円 が届きました！ (残高: ${p.money.toLocaleString()}円)`);
+                showToast("💰 仕送り +30,000円", "success");
+            }
+        }
+        updateUI();
+    }
+
+    function updateUI() {
+        if(!agents || !agents[pId]) return;
+        let p = agents[pId];
+        if (currentPhaseTracker !== phase) { usedSpecialFood = false; currentPhaseTracker = phase; }
+
+        let pData = {
+            'spring-sel': ['春（春インカレ選考）', 'spring-sel'], 'spring-main': ['春（春インカレ本戦）', 'spring-main'], 'japan-champ': ['初夏（日本選手権）', 'japan-champ'],
+            'summer-prac': ['夏（練習・賞金大会）', 'summer-prac'], 'autumn-sel': ['秋（秋インカレ選考）', 'autumn-sel'], 'autumn-main': ['秋（秋インカレ本戦）', 'autumn-main'],
+            'intl-champ': ['秋（国際大会）', 'intl-champ'], 'winter': ['冬（冬季練習）', 'winter'], 'new-year': ['新年度', 'new-year']
+        }[phase];
+        
+        getEl('my-pb').innerText = p.pb.toFixed(2); 
+        getEl('my-qual').innerText = getValidQualRecord(p).toFixed(2);
+        getEl('my-sb').innerText = p.currentSeasonBest < 99 ? p.currentSeasonBest.toFixed(2) : "-";
+        
+        let spikeBuff = SHOP.spike.effects[spikeLevel] || 0;
+        getEl('my-ability').innerHTML = `${(p.ability - spikeBuff).toFixed(2)} <span class="text-xs text-gray-500">(素:${p.ability.toFixed(2)})</span>`;
+        getEl('my-fatigue').innerText = p.fatigue.toFixed(1); 
+        getEl('my-injury').innerHTML = p.isInjured ? "<span class='injury'>🏥 怪我</span>" : "✅ 良好";
+        getEl('my-money').innerText = p.money.toLocaleString();
+        
+        getEl('care-name').innerText = SHOP.care.names[careLevel]; getEl('care-lv').innerText = careLevel;
+        let nextCareCost = careLevel < 10 ? SHOP.care.costs[careLevel+1] : "MAX";
+        getEl('care-cost').innerText = nextCareCost === "MAX" ? "MAX" : nextCareCost.toLocaleString();
+        getEl('btn-buy-care').disabled = careLevel >= 10 || p.money < (SHOP.care.costs[careLevel+1]||99999999);
+        getEl('btn-buy-care').className = getEl('btn-buy-care').disabled ? "w-full bg-gray-400 text-white text-sm font-bold py-2 rounded cursor-not-allowed" : "w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-2 rounded shadow";
+        getEl('care-eff').innerText = Math.round((SHOP.care.effects[careLevel]||0) * 100);
+
+        getEl('spike-name').innerText = SHOP.spike.names[spikeLevel]; getEl('spike-lv').innerText = spikeLevel;
+        let nextSpikeCost = spikeLevel < 10 ? SHOP.spike.costs[spikeLevel+1] : "MAX";
+        getEl('spike-cost').innerText = nextSpikeCost === "MAX" ? "MAX" : nextSpikeCost.toLocaleString();
+        getEl('btn-buy-spike').disabled = spikeLevel >= 10 || p.money < (SHOP.spike.costs[spikeLevel+1]||99999999);
+        getEl('btn-buy-spike').className = getEl('btn-buy-spike').disabled ? "w-full bg-gray-400 text-white text-sm font-bold py-2 rounded cursor-not-allowed" : "w-full bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 rounded shadow";
+        getEl('spike-eff').innerText = (SHOP.spike.effects[spikeLevel]||0).toFixed(2);
+
+        getEl('btn-buy-food').disabled = usedSpecialFood || p.money < 20000;
+        getEl('btn-buy-food').innerText = usedSpecialFood ? "購入済み" : "購入: 20,000円";
+        getEl('btn-buy-food').className = getEl('btn-buy-food').disabled ? "w-full bg-gray-400 text-white text-sm font-bold py-2 rounded shadow cursor-not-allowed" : "w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2 rounded shadow";
+
+        document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.action-panel').forEach(e => e.style.display = 'none');
+        getEl('screen-main').classList.add('active'); 
+        getEl('season-title').innerText = `人生${loopCount}周目 ${year}年目 - ${pData[0]}`;
+        
+        let pnl = getEl(`panel-${pData[1]}`);
+        if(pnl) pnl.style.display = 'block';
+
+        if(phase === 'spring-sel' && getEl('pre-sel-spring-qual')) getEl('pre-sel-spring-qual').innerText = getValidQualRecord(p).toFixed(2);
+        if(phase === 'autumn-sel' && getEl('pre-sel-summer-qual')) getEl('pre-sel-summer-qual').innerText = getValidQualRecord(p).toFixed(2);
+
+        if(phase.includes('main')) {
+            let q = curQuals.includes(p);
+            let statEl = getEl(`${pData[1]}-status`);
+            if(statEl) statEl.innerHTML = q ? "<span class='success'>✅ 出場</span>" : "<span class='injury'>❌ 敗退</span>";
+            let btnEl = getEl(`btn-${pData[1]}`);
+            if(btnEl) btnEl.innerText = q ? "本戦に出走 (遠征費5,000円)" : "見守る";
+
+            let rData = curRelayData.find(d => d.u === UNIVS[0]), pfx = pData[1] === 'spring-main' ? 'spring' : 'autumn', anBox = getEl(`${pfx}-relay-announce`);
+            if (rData && anBox) {
+                let announceHtml = `<h4 class="font-bold mb-1 text-gray-700 border-b border-gray-200">📢 コーチのマイルリレー選考</h4>`;
+                announceHtml += `<p class="mb-1 text-xs">評価スコア: <strong>${(rData.myScore).toFixed(2)}</strong> (部内 ${rData.myRank}位)</p>`;
+                if (rData.pI !== -1) announceHtml += `<p class="mb-1 text-sm text-red-600 font-bold">🔥 リレーメンバーに選出！ (${rData.pI + 1}走)</p>`;
+                else announceHtml += `<p class="mb-1 text-sm text-gray-500">今回はメンバー外です。</p>`;
+                announceHtml += `<p class="text-xs bg-gray-100 p-1 rounded">オーダー: ${rData.team.map((a, i) => `${i+1}走: ${a.name}`).join(' / ')}</p>`;
+                anBox.innerHTML = announceHtml;
+            }
+        }
+
+        if (phase === 'japan-champ' || phase === 'intl-champ') {
+            let qual = getValidQualRecord(p), isJp = phase === 'japan-champ', std = isJp ? 46.30 : 45.50, nm = isJp ? '日本選手権' : '国際大会';
+            let elStat = getEl(isJp ? 'jc-status' : 'intl-status'), elAct = getEl(isJp ? 'jc-action' : 'intl-action');
+            if (qual <= std) {
+                elStat.innerHTML = `<span class="success">✅ 出場権獲得！</span> (資格: ${qual.toFixed(2)}秒)`;
+                elAct.innerHTML = `<button onclick="executeMain('${nm}', ${std})" class="w-full ${isJp?'bg-red-600 hover:bg-red-700':'bg-purple-600 hover:bg-purple-700'} text-white font-bold py-3 rounded shadow">本戦に出走</button>`;
+            } else {
+                elStat.innerHTML = `<span class="injury">❌ 標準未達</span> (資格: ${qual.toFixed(2)}秒)`;
+                elAct.innerHTML = `<button onclick="skipTournament('${nm}', ${std}, '${isJp?'summer-prac':'winter'}')" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded shadow">スキップ</button>`;
+            }
+        }
+
+        let myTeam = agents.filter(a => a.univ === UNIVS[0] && a.isActive).sort((a,b) => (a.lastTime||99) - (b.lastTime||99));
+        let tbody = getEl('rival-table-body');
+        if(tbody) tbody.innerHTML = myTeam.map((a,i) => `<tr class="clickable-row ${a.isPlayer?'player-row':''}" onclick="showAgentModal(${a.id})"><td>${a.grade}年</td><td>${i+1}</td><td>${a.name}</td><td>${a.pb.toFixed(2)}</td><td>${getValidQualRecord(a)<99?getValidQualRecord(a).toFixed(2):"-"}</td><td>${a.lastTime?a.lastTime.toFixed(2):"-"}</td><td>${a.isInjured?"🏥":"🏃"}</td></tr>`).join('');
+        updateRisk(); 
+    }
+
+    function startGame(isNGP = false) {
+        try {
+            isNGPFlag = isNGP; window.phaseCount = 0; hasClearedThisRun = false; window.gameClearRTA = 0; window.clearTimeString = ''; hasRegisteredRanking = false; window.hasRegisteredRTA = false;
+
+            if (isNGP) {
+                loopCount++;
+                document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
+                getEl('screen-main').classList.add('active');
+            } else {
+                loopCount = 1; ngpData = null; window.playerInitialPB = 0; window.injuryCount = 0; window.totalEarnedMoney = 100000; 
+            }
+
+            agents = []; myUnivIdCounter = 11;
+            let p_stratEl = getEl('player-strategy'), p_strat = p_stratEl ? p_stratEl.value : "EVEN";
+            athleteNamesPool = [...ATHLETE_NAMES].sort(() => Math.random() - 0.5);
+
+            const generatePB = () => Math.max(44.5, randn(48.0, 0.912));
+            let playerInitial = generatePB();
+            let myAgents = []; let gradeCounts = {1: 2, 2: 3, 3: 3, 4: 3}; let idCnt = 1;
+            for(let g = 1; g <= 4; g++){
+                for(let i = 0; i < gradeCounts[g]; i++){
+                    let a = new Agent(idCnt++, generatePB(), false, UNIVS[0], "EVEN", getAthleteName()); a.grade = g; myAgents.push(a);
+                }
+            }
+            agents.push(...myAgents);
+            
+            if (isNGP && ngpData) {
+                let p = new Agent(0, ngpData.pb, true, UNIVS[0], ngpData.strat, "ハルノスケ");
+                p.qualifyingRecord = ngpData.qualifyingRecord; p.ability = ngpData.ability; p.fatigue = ngpData.fatigue; p.money = ngpData.money; careLevel = ngpData.careLv; spikeLevel = ngpData.spikeLv; p.currentSeasonBest = 99.99; p.grade = 1;
+                agents.push(p);
+            } else {
+                let p = new Agent(0, playerInitial, true, UNIVS[0], p_strat, "ハルノスケ");
+                p.grade = 1; careLevel = 0; spikeLevel = 0; agents.push(p); window.playerInitialPB = playerInitial;
+            }
+            pId = agents.length - 1; usedSpecialFood = false;
+
+            for(let i=1; i<UNIVS.length; i++) {
+                for(let g = 1; g <= 4; g++){ for(let j=0; j<3; j++) { let a = new Agent(agents.length, generatePB(), false, UNIVS[i], "EVEN", getAthleteName()); a.grade = g; agents.push(a); } }
+            }
+            for(let i=0; i<8; i++) { let a = new Agent(agents.length, Math.max(45.0, randn(45.6, 0.4)), false, "実業団", "EVEN", getAthleteName()); a.grade = 5; a.qualifyingRecord = a.pb; agents.push(a); }
+            for(let i=0; i<8; i++) { let a = new Agent(agents.length, Math.max(43.8, randn(44.3, 0.4)), false, "海外", "EVEN", getForeignName()); a.grade = 5; a.qualifyingRecord = a.pb; agents.push(a); }
+
+            year = 1; 
+            getEl('log-area').innerHTML = `<div class="mb-2 border-b border-gray-300 pb-2"><strong>1年目開始。</strong></div>`;
+            setPhase('spring-sel');
+            if (isNGP) log(`✨ 【強くてニューゲーム】 人生${loopCount}周目 を開始しました！`);
+            upCoach(isNGP ? 'normal_effort' : 'first_look');
+        } catch(e) { console.error("Start Game Error:", e); alert("初期化エラーが発生しました。ページをリロードしてください。"); }
+    }
+
+    function startNewGamePlus() {
+        let p = agents[pId];
+        ngpData = { pb: p.pb, qualifyingRecord: getValidQualRecord(p), ability: p.ability, fatigue: p.fatigue, money: p.money, strat: p.strat, careLv: careLevel, spikeLv: spikeLevel };
+        startGame(true);
+    }
+
+    function runAnim(title, data, onDone) {
+        document.querySelectorAll('.screen').forEach(e => e.classList.remove('active'));
+        getEl('screen-race').classList.add('active'); 
+        getEl('race-title').innerText = title;
+        
+        let canvasContainer = getEl('race-canvas-container');
+        if (curTourney === '日本選手権' && title.includes('本戦')) canvasContainer.style.background = '#4a1c1c';
+        else if (curTourney === '国際大会' && title.includes('本戦')) canvasContainer.style.background = '#1a2b4c';
+        else canvasContainer.style.background = '#2c3e50';
+        
+        raceData = data; rDone = onDone; lastAnimTime = performance.now(); raceElapsedTime = 0;
+        let c = getEl('raceCanvas'); if(c) { c.width = 900; c.height = Math.max(100, data.length * 25 + 40); }
+        cancelAnimationFrame(animReq); animReq = requestAnimationFrame(drawRace);
+    }
+
+    function drawRace(ts) {
+        let cvs = getEl('raceCanvas'); if(!cvs) return;
+        let ctx = cvs.getContext('2d'), delta = (ts - lastAnimTime) / 1000; lastAnimTime = ts;
+        let specialRace = (curTourney === '日本選手権' || curTourney === '国際大会') && !isRelay && getEl('race-title').innerText.includes('本戦');
+        let m = isRelay ? 1600 : 400, playerDist = 0, pData = raceData.find(d => d.a.isPlayer);
+        
+        if (pData) {
+            let st = pData.res.segs, q = m/4, pt = raceElapsedTime;
+            if (pt >= pData.res.time) playerDist = m;
+            else if (pt > 0) playerDist = pt<st[0] ? q*(pt/st[0]) : pt<st[1] ? q+q*((pt-st[0])/(st[1]-st[0])) : pt<st[2] ? q*2+q*((pt-st[1])/(st[2]-st[1])) : q*3+q*((pt-st[2])/(st[3]-st[2]));
+        }
+
+        let speed = isRelay ? 48 : 12, isClimax = false;
+        if (specialRace && pData) {
+            let startSlowDist = m - 150;
+            if (playerDist > startSlowDist && playerDist < m) {
+                isClimax = true;
+                let t = Math.min(1, (playerDist - startSlowDist) / 150); 
+                speed = speed * (1 - 0.75 * t); 
+            }
+        }
+
+        raceElapsedTime += delta * speed; let e = raceElapsedTime;
+        getEl('race-timer').innerText = isRelay ? fmt(e) : e.toFixed(2) + " 秒";
+        ctx.clearRect(0,0,900,900);
+        [0,m/4,m/2,m*0.75,m].forEach(d => { let x = 120+(d/m)*740; ctx.beginPath(); ctx.moveTo(x,20); ctx.lineTo(x,900); ctx.strokeStyle = d===m?"#e74c3c":"#7f8c8d"; ctx.stroke(); ctx.fillText(d+"m",x-10,15); });
+
+        let allD = true, pX = 0, pY = 0;
+        raceData.forEach((p, i) => {
+            let y = 30+i*25, cd = 0, st = p.res.segs, q = m/4;
+            if(e >= p.res.time) cd = m;
+            else if(e > 0) { allD = false; cd = e<st[0]?q*(e/st[0]) : e<st[1]?q+q*((e-st[0])/(st[1]-st[0])) : e<st[2]?q*2+q*((e-st[1])/(st[2]-st[1])) : q*3+q*((e-st[2])/(st[3]-st[2])); }
+            if (p.a.isPlayer) { pX = 120+(cd/m)*740; pY = y; }
+            ctx.fillStyle = p.a.isPlayer ? "#f1c40f" : "#ecf0f1"; ctx.font = p.a.isPlayer ? "bold 14px Arial" : "12px Arial";
+            ctx.fillText(p.a.idStr || p.a.name, 10, y+5);
+            ctx.beginPath(); ctx.arc(120+(cd/m)*740, y, 6, 0, Math.PI*2); ctx.fillStyle = p.a.isPlayer?"#f1c40f":p.a.univ===UNIVS[0]?"#3498db":"#95a5a6"; ctx.fill();
+        });
+        
+        if (isClimax) {
+            let radGrad = ctx.createRadialGradient(pX, pY, 30, pX, pY, 250);
+            radGrad.addColorStop(0, "rgba(0,0,0,0)"); radGrad.addColorStop(1, "rgba(0,0,0,0.85)");
+            ctx.fillStyle = radGrad; ctx.fillRect(0, 0, 900, 900);
+            ctx.save(); ctx.translate(pX, pY); ctx.beginPath(); ctx.rotate(ts * 0.005); 
+            for(let i=0; i<360; i+=12) { let a = i * Math.PI / 180; ctx.moveTo(Math.cos(a)*40, Math.sin(a)*40); ctx.lineTo(Math.cos(a)*900, Math.sin(a)*900); }
+            ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+            let p = raceData.find(d => d.a.isPlayer);
+            if(p) {
+                ctx.fillStyle = "#f1c40f"; ctx.font = "bold 14px Arial"; ctx.fillText(p.a.idStr || p.a.name, 10, pY+5); 
+                ctx.beginPath(); ctx.arc(pX, pY, 8, 0, Math.PI*2); ctx.fillStyle = "#f1c40f"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke();
+            }
+        }
+        if(allD) { getEl('race-timer').innerText = "ゴール！"; setTimeout(rDone, 1000); } else animReq = requestAnimationFrame(drawRace);
+    }
+
+    function skipRace() { cancelAnimationFrame(animReq); if(rDone) rDone(); }
+
+    function executeSelection(tName, std) {
+        let pData = agents.filter(a=>a.isActive).map(a => { let res = a.runRace(1); return {a, res}; });
+        pData.forEach(p => { p.a.fatigue = Math.min(10, p.a.fatigue + 1.0 * (1 - (p.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0))); });
+
+        curQuals = [];
+        UNIVS.forEach(u => pData.filter(p=>p.a.univ===u).sort((a,b)=>a.res.time-b.res.time).forEach((p,i) => {
+            p.a.logs.push({ n: `${year}年 ${tName}選考`, t: p.res.time, pb: p.res.isPB, inj: p.a.isInjured, r: i+1 });
+            if(i<3 && getValidQualRecord(p.a) <= std) curQuals.push(p.a);
+        }));
+        
+        let myTeam = pData.filter(p=>p.a.univ===UNIVS[0]);
+        myTeam.sort(() => Math.random() - 0.5);
+        curTourney = tName + '選考';
+        runAnim(`🏃 選考会 (${tName})`, myTeam, () => {
+            myTeam.sort((a,b)=>a.res.time - b.res.time); determineRelayTeams(); showTournamentResult(curTourney, myTeam);
+        });
+    }
+
+    function showTournamentResult(tName, pData) {
+        document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); getEl('screen-tournament').classList.add('active');
+        getEl('tourney-title').innerText = `🏆 ${year}年 ${tName}`; 
+        
+        let isSelection = tName.includes('選考'), isKanto = tName.includes('インカレ') && !isSelection;
+        getEl('tourney-subtitle').innerText = `400m 決勝 (${pData.length}名) - タップで成績推移`;
+        
+        let cEv = "normal_effort", p = agents[pId], isChamp = false, champType = "";
+        
+        getEl('tourney-table-body').innerHTML = pData.map((d,i) => {
+            let r=i+1, rem="", cls = d.a.isPlayer ? "player-row" : d.a.univ===UNIVS[0] ? "teammate-row" : "", prz = getPrize(tName, r);
+            if (!isSelection) {
+                if(r===1){rem="<span class='medal-gold'>🥇 優勝</span>";} else if(r===2){rem="<span class='medal-silver'>🥈 2位</span>";} else if(r===3){rem="<span class='medal-bronze'>🥉 3位</span>";} else if(r<=8){rem="🎖️ 入賞";}
+                if (prz > 0) rem += `<br><span class="text-green-600 font-bold">+${prz.toLocaleString()}円</span>`;
+                if (d.a.isPlayer && r === 1) { if (tName === '日本選手権') { isChamp = true; champType = "JAPAN"; } if (tName === '国際大会') { isChamp = true; champType = "WORLD"; } }
+            } else {
+                if (curQuals.includes(d.a)) rem += "<span class='success font-bold'>✅ 本戦出場</span>"; else rem += "<span class='text-gray-500'>❌ 落選</span>";
+            }
+            if(d.res.recM) rem += `<br><b style="color:#e74c3c;font-size:12px">${d.res.recM}</b>`;
+            d.a.logs.push({n:`${year}年 ${tName}`, t:d.res.time, pb:d.res.isPB, inj:d.a.isInjured, r});
+            
+            if(d.a.isPlayer) {
+                if (!isSelection && prz > 0) { d.a.money += prz; window.totalEarnedMoney += prz; log(`💰 ${tName} ${r}位の賞金 ${prz.toLocaleString()}円を獲得しました！ (残高: ${d.a.money.toLocaleString()}円)`); }
+                let tm = isSelection ? `選考会 ${r}位！` : `${tName} ${r}位！`;
+                if (!isSelection && prz > 0) tm += `<br>賞金 ${prz.toLocaleString()}円！`;
+                
+                if(d.res.recM) { tm = `${d.res.recM}<br>${tm}`; cEv=getRecEvent(d.res.recM, tName); showToast(tm, "medal"); }
+                else if(!isSelection && r===1) { showToast(tm,"medal"); cEv="win"; }
+                else if(!isSelection && r<=3) { showToast(tm,"medal"); cEv="med"; } 
+                else if(!isSelection && r<=8) { showToast(tm,"success"); cEv="over"; } 
+                else if(d.res.isPB) { showToast(`${tm}<br>★PB★`,"pb"); cEv="pb"; }
+                else { showToast(tm,"info"); cEv="normal_effort"; }
+            }
+            return `<tr class="clickable-row ${cls}" onclick="showAgentModal(${d.a.id})"><td>${r}</td><td>${d.a.univ}</td><td>${d.a.name}</td><td>${d.res.time.toFixed(2)}秒 ${d.res.isPB?"<b style='color:#f39c12'>★PB</b>":""}</td><td>${rem}</td></tr>`;
+        }).join('');
+        
+        if (isChamp) playChampCelebration(champType);
+
+        let btn = getEl('tourney-next-btn');
+        if (isKanto) { btn.innerText = "🔥 マイルリレーへ"; btn.onclick = executeRelay; }
+        else { btn.innerText = isSelection ? "ダッシュボードへ戻る" : "⏭️ 次のシーズンへ"; btn.onclick = closeTournamentScreen; }
+
+        if (isChamp) {
+            btn.style.display = 'none';
+            setTimeout(() => { btn.style.display = 'inline-block'; }, 4500);
+        } else {
+            btn.style.display = 'inline-block';
+        }
+        
+        let isPlayerIn = pData.some(d => d.a.isPlayer);
+        if (isSelection) {
+            if (curQuals.includes(p)) upCoach(p.isInjured ? "inj" : "qualified", 5, tName.replace('選考',''));
+            else upCoach("not_qualified", 5, tName.replace('選考',''));
+        } else {
+            if (isPlayerIn) upCoach(p.isInjured ? "inj" : cEv, 5, tName);
+            else upCoach("not_qualified", 5, tName);
+        }
+
+        if (!isSelection && tName === '国際大会' && pData.some(d => d.a.isPlayer && d.a.logs[d.a.logs.length-1].r === 1)) {
+            if (!hasClearedThisRun) {
+                hasClearedThisRun = true;
+                const totalTurns = ((state.loopCount - 1) * 16) + ((state.year - 1) * 4) + (state.seasonIndex + 1);
+                window.gameClearRTA = totalTurns;
+                const seasonNames = ["春", "夏", "秋", "冬"];
+                window.clearTimeString = `人生${state.loopCount}周目 ${state.year}年目 ${seasonNames[state.seasonIndex]} (計${totalTurns}ターン)`;
+                
+                setTimeout(() => { showCelebration(p.pb, window.clearTimeString); }, 4500); 
+            }
+        }
+        recordHistory(`${year}年 ${tName}`);
+    }
+
+    function executeMain(tName, std) {
+        let fee = (tName === '春インカレ' || tName === '秋インカレ') ? 5000 : tName === '日本選手権' ? 20000 : 0;
+        let p = agents[pId];
+        
+        if (tName === '日本選手権' || tName === '国際大会') {
+            agents.filter(a => a.grade === 5).forEach(a => a.qualifyingRecord = Math.min(a.pb, a.ability));
+            curQuals = agents.filter(a => a.isActive && getValidQualRecord(a) <= std);
+        }
+
+        if (curQuals.includes(p)) {
+            if (tName === '日本選手権') { p.money += 30000; window.totalEarnedMoney += 30000; log(`💌 家族から日本選手権出場のお祝い金として 30,000円 が届きました！`); showToast("💌 お祝い金 +30,000円", "success"); }
+            if (fee > 0) { p.money -= fee; log(`💸 遠征費 ${fee.toLocaleString()}円を支払いました。`); }
+            if (tName === '国際大会') { let bonus = (Math.floor(Math.random() * 6) + 5) * 10000; p.money += bonus; window.totalEarnedMoney += bonus; log(`✈️ 国際大会出場ボーナス: ${bonus.toLocaleString()}円を獲得しました！`); }
+        }
+
+        let isKanto = tName.includes('インカレ');
+        let univs = isKanto ? UNIVS.slice(0,5) : tName === '国際大会' ? ["海外", "実業団", ...UNIVS] : ["実業団", ...UNIVS];
+        let pData = curQuals.filter(q=>univs.includes(q.univ)).map(q=>({a:q, res:q.runRace(1.2)}));
+        
+        if (tName === '国際大会') pData.forEach(d => { if(d.a.univ === '海外') d.res = d.a.runRace(1.0, false, -0.3); });
+
+        pData.forEach(d => { d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - (d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0))); });
+
+        let maxEntrants = isKanto ? 16 : 8;
+        if (pData.length > maxEntrants) {
+            pData.sort((a,b) => a.res.time - b.res.time);
+            let meIdx = pData.findIndex(d => d.a.isPlayer);
+            let finalLst = pData.slice(0, maxEntrants);
+            if (meIdx >= maxEntrants && curQuals.includes(p)) { finalLst.pop(); finalLst.push(pData[meIdx]); }
+            pData = finalLst;
+        }
+        
+        pData.sort(() => Math.random() - 0.5);
+        curTourney = tName;
+        runAnim(`🏆 ${tName} 本戦`, pData, () => {
+            pData.sort((a,b)=>a.res.time-b.res.time);
+            showTournamentResult(tName, pData);
+        });
+    }
+
+    function skipTournament(tName, std, nextPhase) {
+        let entrants = agents.filter(a => a.isActive && getValidQualRecord(a) <= std);
+        entrants.forEach(a => {
+            let res = a.runRace(1.2);
+            a.logs.push({ n: `${year}年 ${tName}`, t: res.time, pb: res.isPB, inj: a.isInjured, r: "-" }); 
+            a.lastTime = res.time;
+        });
+        entrants.sort((a,b) => a.lastTime - b.lastTime);
+        entrants.forEach((a, i) => { a.logs[a.logs.length - 1].r = i + 1; });
+        
+        log(`📝 ${tName} は標準記録未達のためスキップしました。`);
+        upCoach('skip', 5, tName);
+        setPhase(nextPhase);
+    }
+
+    const closeTournamentScreen = () => { 
+        if (curTourney === '春インカレ選考') setPhase('spring-main');
+        else if (curTourney === '春インカレ') setPhase('japan-champ');
+        else if (curTourney === '日本選手権') setPhase('summer-prac');
+        else if (curTourney === '夏・グランプリ') setPhase('autumn-sel');
+        else if (curTourney === '秋インカレ選考') setPhase('autumn-main');
+        else if (curTourney === '秋インカレ') setPhase('intl-champ');
+        else if (curTourney === '国際大会') setPhase('winter');
+        else setPhase('winter');
+    };
+
+    function executeRelay() {
+        isRelay = true; 
+        let rData = curRelayData.map(d => {
+            let tt = 0, laps = [], segs = [];
+            d.team.forEach((a,i) => { let res = a.runRace(1,true,i===0?0:-0.6); tt+=res.time; laps.push({a, t:res.time}); segs.push(tt); });
+            return { a:{isPlayer:d.pI!==-1, univ:d.u, name:d.u, idStr:d.pI!==-1?`あなた(${d.pI+1}走)`:d.u===UNIVS[0]?"自大学":d.u.substring(0,3)}, res:{time:tt, segs}, laps };
+        });
+
+        rData.forEach(d => { d.laps.forEach(l => { l.a.fatigue = Math.min(10, l.a.fatigue + 1.0 * (1 - (l.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0))); }); });
+        rData.sort(() => Math.random() - 0.5);
+        
+        runAnim(`🔥 ${curTourney} 4×400mR`, rData, () => { 
+            isRelay=false; 
+            document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); 
+            getEl('screen-relay').classList.add('active');
+            rData.sort((a,b)=>a.res.time-b.res.time); 
+            
+            let cEv="normal_effort";
+            getEl('relay-results-container').innerHTML = rData.map((d,i) => {
+                let r=i+1, isMy = d.a.univ===UNIVS[0], h = `<div class="relay-header">${r}位: ${d.a.univ} (${fmt(d.res.time)})</div>`;
+                if(isMy) { 
+                    let prz = r === 1 ? 30000 : r === 2 ? 20000 : r === 3 ? 10000 : 0;
+                    if(prz > 0) {
+                        let myRun = d.a.isPlayer, actualPrz = myRun ? prz : prz / 10;
+                        agents[pId].money += actualPrz; window.totalEarnedMoney += actualPrz;
+                        h += `<span class="success text-green-600 font-bold">${myRun ? `上位入賞！(賞金+${actualPrz.toLocaleString()}円)` : `チーム入賞！(応援ボーナス+${actualPrz.toLocaleString()}円)`}</span><br>`; 
+                        log(`💰 リレー${r}位入賞で、${myRun?'賞金':'応援ボーナス'} ${actualPrz.toLocaleString()}円を獲得しました！ (残高: ${agents[pId].money.toLocaleString()}円)`);
+                    }
+                }
+                h += d.laps.map((l,li) => {
+                    let hl = ""; 
+                    if(l.a.isPlayer) { 
+                        agents[pId].logs.push({n:`${year}年 ${curTourney} R`, t:l.t, pb:false, inj:false, r}); 
+                        if(l.t < agents[pId].pb) { hl="<b class='success'>🔼好タイム!</b>"; cEv="relay"; } 
+                    }
+                    return `<div class="mb-1"><b>${li+1}走:</b> <span class="clickable-row text-blue-600 underline" onclick="showAgentModal(${l.a.id})">${l.a.name}</span> - ${l.t.toFixed(2)}秒 ${hl}</div>`;
+                }).join(''); return `<div class="relay-box ${isMy?'relay-mine':''}">${h}</div>`;
+            }).join('');
+            
+            if(rData.some(d=>d.a.isPlayer)) upCoach(cEv, 5, curTourney);
+            else upCoach("not_qualified", 5, curTourney);
+        });
+    }
+
+    function executePractice(isWinter) {
+        let p_e = parseFloat(getEl(`input-${isWinter?'winter':'summer'}-e`)?.value || 6.0), m = isWinter ? 0 : parseInt(getEl('input-summer-m')?.value || 2);
+        let isPrizeMeet = !isWinter && getEl('input-prize-meet')?.checked, p = agents[pId], recM_player = null, oldAbility = p.ability;
+
+        if (isPrizeMeet) {
+            let qual = getValidQualRecord(p);
+            if (qual > 47.00) { showToast("標準(47.00秒)未達", "fail"); log(`❌ グランプリの参加標準記録(47.00秒)未達のため出場を断念しました。`); isPrizeMeet = false; getEl('input-prize-meet').checked = false; }
+            else if (p.money < 10000) { showToast("資金不足で出場不可", "fail"); isPrizeMeet = false; getEl('input-prize-meet').checked = false; }
+            else { p.money -= 10000; log(`💸 夏・グランプリの参加費 10,000円を支払いました。 (残高: ${p.money.toLocaleString()}円)`); }
+        }
+
+        let careEff = SHOP.care.effects[careLevel] || 0;
+        agents.filter(a=>a.isActive).forEach(a => {
+            let e = a.isPlayer ? p_e : (5 + Math.random()*4), ai_m = isWinter||a.isPlayer ? m : Math.floor(Math.random()*3)+1;
+            let fat_gain = (isWinter ? 0.6 * e : 0.5 * e + 0.6 * ai_m);
+            if (a.isPlayer) fat_gain *= (1 - careEff);
+
+            a.fatigue = Math.min(10, a.fatigue*(isWinter?0.5:0.3) + fat_gain);
+            a.isInjured = Math.random() < Math.min(0.9, Math.pow(a.fatigue/10,2)*(isWinter?0.4:0.5));
+            if (a.isPlayer && a.isInjured) window.injuryCount++;
+
+            let sc = a.ability < 44.0 ? 0.1 : a.ability < 45.0 ? 0.3 : a.ability < 46.0 ? 0.6 : a.ability < 47.0 ? 0.8 : 1.0;
+            let d = randn(((0.05 * e - 0.20)) * sc, isWinter ? 0.4 : 0.2); 
+            a.ability -= a.isInjured ? Math.min(0, d) : d;
+            
+            if(!isWinter && !a.isInjured) {
+                let best = 99;
+                for(let i=0;i<ai_m;i++) { let res = a.runRace(); if(res.recM && a.isPlayer) recM_player = res.recM; a.logs.push({n:`${year}年 夏記録会`, t:res.time, pb:res.isPB, inj:false, r:"-"}); if(res.time<best) best=res.time; }
+                if(ai_m>0) a.lastTime = best;
+            }
+        });
+        
+        if (isPrizeMeet && !p.isInjured) {
+            curTourney = '夏・グランプリ';
+            let pData = agents.filter(a=>a.isActive && (a.univ === '実業団' || a.isPlayer)).map(a => ({a, res: a.runRace(1, false, -0.2)}));
+            let topStudents = agents.filter(a=>a.isActive && !a.isPlayer && a.grade < 5 && a.ability < 46.5).map(a => ({a, res: a.runRace(1, false, -0.2)}));
+            pData = pData.concat(topStudents);
+
+            pData.forEach(d => { let currentCareEff = d.a.isPlayer ? (SHOP.care.effects[careLevel] || 0) : 0; d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - currentCareEff)); });
+            pData.sort((a,b) => a.res.time - b.res.time);
+            
+            let meIdx = pData.findIndex(d => d.a.isPlayer), final8 = pData.slice(0, 8);
+            if (!final8.find(d => d.a.isPlayer)) { final8.pop(); final8.push(pData[meIdx]); }
+            final8.sort(() => Math.random() - 0.5);
+            
+            runAnim(`💸 夏・グランプリ`, final8, () => { final8.sort((a,b)=>a.res.time-b.res.time); showTournamentResult('夏・グランプリ', final8); }); return; 
+        } else if (isPrizeMeet && p.isInjured) { log(`🏥 怪我のためグランプリを棄権しました...`); }
+
+        let diff = oldAbility - p.ability;
+        let msg = isWinter ? `[冬完] ベース走力変動` : `[夏完] 記録会:${m}回 疲労:${p.fatigue.toFixed(1)}`;
+        msg += `<br>└ 走力: ${diff > 0 ? '-' : '+'}${Math.abs(diff).toFixed(2)}秒 (現在: ${p.ability.toFixed(2)}秒)`;
+
+        if(p.isInjured) { msg+=`<br><span class="injury">※怪我発生</span>`; showToast("🏥 怪我発生","fail"); upCoach("inj", p_e); } 
+        else {
+            if(!isWinter && m>0) {
+                let pbs = p.logs.slice(-m).filter(l=>l.pb);
+                msg+=`<br>└ ベスト: ${p.lastTime.toFixed(2)}秒 ${pbs.length?"<span class='highlight'>★PB!</span>":""}`;
+                if(recM_player) { showToast(`${recM_player}<br>★PB更新★`, "medal"); msg += `<br><b style="color:#e74c3c">${recM_player}</b>`; upCoach(getRecEvent(recM_player, '夏・グランプリ'), p_e); }
+                else if(pbs.length) { showToast("記録会<br>★PB更新★","pb"); upCoach("pb", p_e); } 
+                else upCoach("normal_effort", p_e);
+            } else { showToast(isWinter?"⛄️ 冬季完了":"☀️ 練習完了"); upCoach("normal_effort", p_e); }
+        }
+        log(msg); 
+        
+        if(isWinter) { 
+            recordHistory(`${year}年冬`); year++; 
+            let retiring = [], incoming = [];
+            
+            agents.filter(a => a.isActive).forEach(a => {
+                if (a.grade === 4) { a.isActive = false; if (a.univ === UNIVS[0]) retiring.push(a); } 
+                else if (a.grade < 4) { a.grade++; a.qualifyingRecord = a.currentSeasonBest < 99.0 ? a.currentSeasonBest : 99.99; a.currentSeasonBest = 99.99; }
+            });
+
+            if (year <= 4) {
+                UNIVS.forEach(u => {
+                    for (let i = 0; i < 3; i++) {
+                        let pb = Math.max(44.5, randn(48.0, 0.912)); 
+                        let newId = agents.length;
+                        if (u === UNIVS[0]) { myUnivIdCounter++; newId = myUnivIdCounter; }
+                        let a = new Agent(newId, pb, false, u, "EVEN", getAthleteName());
+                        a.grade = 1; agents.push(a);
+                        if (u === UNIVS[0]) incoming.push(a);
+                    }
+                });
+            }
+
+            let nyHtml = `<div class="mb-2"><strong class="text-red-600">🎓 卒業生 (${retiring.length}名)</strong><br>`;
+            retiring.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (最終PB: ${a.pb.toFixed(2)}秒 / 資金: ${a.money?a.money.toLocaleString():0}円)</span><br>`; }); nyHtml += `</div>`;
+            
+            if (year <= 4) {
+                nyHtml += `<div><strong class="text-blue-600">✨ 新入生 (${incoming.length}名)</strong><br>`;
+                incoming.forEach(a => { nyHtml += `<span class="text-xs">・${a.name} (初期PB: ${a.pb.toFixed(2)}秒)</span><br>`; }); nyHtml += `</div>`;
+            } else {
+                nyHtml += `<div class="mt-4 text-center font-bold text-lg text-gray-800">4年間の競技生活が終了しました！</div>`;
+            }
+            
+            getEl('new-year-content').innerHTML = nyHtml;
+            let btnNewYear = getEl('btn-new-year'); if(btnNewYear) btnNewYear.innerText = year <= 4 ? "新シーズンを開始する" : "最終結果を見る";
+            setPhase('new-year');
+        } else { setPhase('autumn-sel'); }
+    }
+
+    function startNewYear() {
+        if (year > 4) showEnd();
+        else { getEl('log-area').insertAdjacentHTML('afterbegin', `<div class="mb-2 border-b border-gray-300 pb-2"><strong>${year}年目開始。</strong></div>`); setPhase('spring-sel'); }
+    }
+
+    function showAgentModal(id) {
+        let a = agents.find(ag => ag.id === id); if (!a) return;
+        getEl('modal-agent-name').innerText = `📈 記録推移: ${a.name} ${a.univ !== UNIVS[0] ? `(${a.univ})` : ''} ${a.isActive?'':'(引退)'}`;
+        getEl('agent-modal-overlay').classList.remove('hidden'); getEl('agent-modal-overlay').style.display = 'block';
+        getEl('agent-modal').classList.remove('hidden'); getEl('agent-modal').style.display = 'block';
+
+        if (modalChart) modalChart.destroy(); let pc = a.logs.map(l => l.pb ? '#f39c12' : '#3498db');
+        modalChart = new Chart(getEl('modal-race-chart').getContext('2d'), {
+            type: 'line', data: { labels: a.logs.map(l => l.n), datasets: [{ label: '試合タイム (秒)', data: a.logs.map(l => l.t), borderColor: '#bdc3c7', backgroundColor: '#3498db', pointBackgroundColor: pc, pointBorderColor: pc, pointRadius: a.logs.map(l => l.pb ? 8 : 5), tension: 0.1, borderWidth: 2 }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { reverse: true, title: { display: true, text: 'タイム (秒)' } } } }
+        });
+    }
+
+    function closeAgentModal() { 
+        getEl('agent-modal-overlay').classList.add('hidden'); getEl('agent-modal-overlay').style.display = 'none';
+        getEl('agent-modal').classList.add('hidden'); getEl('agent-modal').style.display = 'none';
+    }
+
+    function openRankingModal() { 
+        getEl('ranking-modal-overlay').classList.remove('hidden'); getEl('ranking-modal-overlay').style.display = 'block';
+        getEl('ranking-modal').classList.remove('hidden'); getEl('ranking-modal').style.display = 'flex';
+        showRankingTab('pb'); 
+    }
+
+    function closeRankingModal() { 
+        getEl('ranking-modal-overlay').classList.add('hidden'); getEl('ranking-modal-overlay').style.display = 'none';
+        getEl('ranking-modal').classList.add('hidden'); getEl('ranking-modal').style.display = 'none';
+    }
+
+    async function registerToRanking() {
+        let name = getEl('ranking-player-name').value.trim() || '名無し'; let p = agents[pId]; let pData = { name: name, date: new Date().toLocaleDateString() }; let entries = [];
+        if (!isNGPFlag) {
+            entries.push({tab: 'pb', data: {...pData, val: p.pb}}); entries.push({tab: 'pbDiff', data: {...pData, val: window.playerInitialPB - p.pb}}); entries.push({tab: 'injury', data: {...pData, val: window.injuryCount}}); entries.push({tab: 'money', data: {...pData, val: window.totalEarnedMoney}});
+            let indT = p.logs.filter(l=>l.n.includes('インカレ') && !l.inj && l.t<60 && !l.n.includes('選考')).map(l=>l.t); let relT = p.logs.filter(l=>l.n.includes(' R') && !l.inj && l.t<60).map(l=>l.t);
+            let diff = (indT.length && relT.length) ? Math.min(...indT) - Math.min(...relT) : -999;
+            entries.push({tab: 'relay', data: {...pData, val: diff}});
+            entries.push({tab: 'pbCount', data: {...pData, val: p.logs.filter(l => l.pb).length}});
+        }
+        if (hasClearedThisRun && gameClearRTA > 0) entries.push({tab: 'rta', data: {...pData, val: gameClearRTA, text: clearTimeString}});
+
+        let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], relay: [], pbCount: [], rta: [] };
+        getEl('ranking-reg-desc').innerHTML = "<span class='text-blue-600 font-bold'>クラウドサーバーに送信中...</span>";
+        let btn = getEl('ranking-reg-btn'); if(btn) btn.disabled = true;
+
+        let onlineSuccess = false;
+        for (let e of entries) {
+            if(!r[e.tab]) r[e.tab] = [];
+            r[e.tab].push(e.data);
+            if (['pbDiff', 'injury', 'money', 'relay', 'pbCount'].includes(e.tab)) r[e.tab].sort((a,b) => b.val - a.val);
+            else r[e.tab].sort((a,b) => a.val - b.val);
+            
+            if (window.saveRankingOnline) { try{ let success = await window.saveRankingOnline(e.tab, e.data); if(success) onlineSuccess = true; }catch(err){} }
+        }
+        localStorage.setItem('tfs_rankings', JSON.stringify(r)); hasRegisteredRanking = true;
+        showToast(onlineSuccess ? "オンラインランキングに登録しました！" : "ローカルランキングに登録しました", "success");
+        getEl('ranking-registration-area').style.display = 'none'; openRankingModal();
+    }
+
+    const rankThemes = {
+        pb: { title: "⏱️ 自己ベスト ランキング", bg: "bg-blue-600", text: "text-blue-600", btn: "bg-blue-100 text-blue-800", active: "bg-blue-600 text-white shadow-md transform scale-105" },
+        pbDiff: { title: "📈 成長幅 ランキング", bg: "bg-green-600", text: "text-green-600", btn: "bg-green-100 text-green-800", active: "bg-green-600 text-white shadow-md transform scale-105" },
+        injury: { title: "🏥 怪我王 ランキング", bg: "bg-red-600", text: "text-red-600", btn: "bg-red-100 text-red-800", active: "bg-red-600 text-white shadow-md transform scale-105" },
+        money: { title: "💰 総稼ぎ ランキング", bg: "bg-yellow-500", text: "text-yellow-600", btn: "bg-yellow-100 text-yellow-800", active: "bg-yellow-500 text-white shadow-md transform scale-105" },
+        pbCount: { title: "🔥 PB更新回数 ランキング", bg: "bg-orange-500", text: "text-orange-600", btn: "bg-orange-100 text-orange-800", active: "bg-orange-500 text-white shadow-md transform scale-105" },
+        rta: { title: "👑 世界優勝RTA ランキング", bg: "bg-purple-600", text: "text-purple-600", btn: "bg-purple-100 text-purple-800", active: "bg-purple-600 text-white shadow-md transform scale-105" }
+    };
+
+    function formatRankVal(tab, val, text) {
+        if (tab === 'pb') return Number(val).toFixed(2) + '秒';
+        if (tab === 'pbDiff') return '+' + Number(val).toFixed(2) + '秒';
+        if (tab === 'injury') return val + '回';
+        if (tab === 'money') return Number(val).toLocaleString() + '円';
+        if (tab === 'pbCount') return val + '回';
+        if (tab === 'rta') return text || (val + " ターン");
+        return val;
+    }
+
+    async function showRankingTab(tab) {
+        if (!rankThemes[tab]) tab = 'pb';
+        Object.keys(rankThemes).forEach(k => {
+            let btn = getEl('tab-btn-' + k);
+            if(btn) btn.className = `px-3 py-2 m-1 rounded-lg font-bold text-sm transition-all duration-200 ${k===tab ? rankThemes[k].active : rankThemes[k].btn}`;
+        });
+
+        let header = getEl('ranking-category-header');
+        if (header) {
+            header.className = `text-center py-4 text-white font-extrabold text-xl md:text-2xl shadow-md z-20 relative tracking-wide ${rankThemes[tab].bg}`;
+            header.innerText = rankThemes[tab].title;
+        }
+
+        getEl('ranking-content').innerHTML = '<div class="py-20 text-center"><p class="text-gray-500 font-bold animate-pulse text-lg">📡 ランキングデータ取得中...</p></div>';
+        
+        let arr = [];
+        if (window.getRankingOnline) {
+            try { let onlineData = await window.getRankingOnline(tab); if (onlineData && onlineData.length > 0) arr = onlineData; } catch(e){}
+        }
+        if (arr.length === 0) {
+            let r = JSON.parse(localStorage.getItem('tfs_rankings')) || {}; arr = r[tab] || [];
+        }
+
+        if (['pbDiff', 'injury', 'money', 'pbCount'].includes(tab)) arr.sort((a,b) => Number(b.val) - Number(a.val));
+        else arr.sort((a,b) => Number(a.val) - Number(b.val));
+        
+        let html = '<table class="w-full text-sm border-collapse"><thead class="bg-gray-100 text-gray-700 sticky top-0 z-10 shadow-sm"><tr><th class="py-3 w-16 border-b">順位</th><th class="py-3 border-b">名前</th><th class="py-3 border-b">記録</th><th class="py-3 w-28 border-b">日付</th></tr></thead><tbody>';
+        
+        if (arr.length === 0) {
+            html += '<tr><td colspan="4" class="py-12 text-center text-gray-500 font-bold">まだ記録がありません</td></tr>';
+        } else {
+            let t = rankThemes[tab];
+            arr.slice(0, 50).forEach((d, i) => {
+                let rankStr = i === 0 ? '🥇 1' : i === 1 ? '🥈 2' : i === 2 ? '🥉 3' : i + 1;
+                let rowCls = i === 0 ? 'bg-yellow-50 font-bold text-base' : i === 1 ? 'bg-gray-50 font-bold' : i === 2 ? 'bg-orange-50 font-bold' : '';
+                html += `<tr class="${rowCls} hover:bg-blue-50 transition-colors">
+                    <td class="py-3 text-center border-b">${rankStr}</td>
+                    <td class="py-3 text-center font-bold text-gray-800 border-b">${d.name}</td>
+                    <td class="py-3 text-center font-extrabold ${t.text} text-base border-b">${formatRankVal(tab, d.val, d.text)}</td>
+                    <td class="py-3 text-center text-xs text-gray-500 border-b">${d.date}</td>
+                </tr>`;
+            });
+        }
+        html += '</tbody></table>';
+        getEl('ranking-content').innerHTML = html;
+    }
+
+    function showEnd() {
+        document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active')); getEl('screen-result').classList.add('active');
+        let t = agents.filter(a=>a.univ===UNIVS[0]).sort((a,b)=>(b.money||0)-(a.money||0));
+        getEl('final-table-body').innerHTML = t.map((a,i) => `<tr class="${a.isPlayer?'player-row':!a.isActive?'bg-gray-100 text-gray-500':''}"><td class="py-1">${i+1}</td><td class="py-1">${a.name}${a.isActive?'':'(引退)'}</td><td class="py-1">${a.pb.toFixed(2)}</td><td class="py-1 text-green-600 font-bold">${(a.money||0).toLocaleString()} 円</td></tr>`).join('');
+        getEl('result-agent-select').innerHTML = t.map(a => `<option value="${a.id}" ${a.isPlayer?'selected':''}>${a.name}${a.isActive?'':'(引退)'} (${a.pb.toFixed(2)}秒 / ${(a.money||0).toLocaleString()}円)</option>`).join('');
+        drawResult();
+
+        let regArea = getEl('ranking-registration-area');
+        if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && gameClearRTA > 0))) {
+            regArea.classList.remove('hidden');
+            regArea.style.display = 'block';
+            let desc = '';
+            if (!isNGPFlag) desc += '🌟 1周目限定の全5部門にエントリー可能！<br>';
+            if (hasClearedThisRun) desc += `⏱️ 世界優勝RTA（${clearTimeString}）の記録が保存されます！`;
+            getEl('ranking-reg-desc').innerHTML = desc;
+        } else {
+            regArea.classList.add('hidden');
+            regArea.style.display = 'none';
+        }
+    }
+
+    function drawResult() {
+        let a = agents.find(ag=>ag.id===parseInt(getEl('result-agent-select').value));
+        if(!a) return;
+        getEl('result-chart-title').innerText = `📈 4年間の軌跡 (${a.name})`;
+        getEl('race-records-body').innerHTML = a.logs.length ? a.logs.map(l => `<tr><td class="py-1">${l.n}</td><td class="py-1">${l.r}</td><td class="py-1">${l.inj?"<span class='injury'>DNS</span>":l.t>60?fmt(l.t):l.t.toFixed(2)+"秒"} ${l.pb?"<b style='color:#f39c12'>★PB</b>":""}</td></tr>`).join('') : "<tr><td colspan='3' class='py-2'>記録なし</td></tr>";
+        
+        if(charts.res) charts.res.destroy(); if(charts.rac) charts.rac.destroy();
+        charts.res = new Chart(getEl('resultChart').getContext('2d'), { type:'line', data:{ labels:a.hist.map(h=>h.l), datasets:[
+            {label:'PB', data:a.hist.map(h=>h.pb), borderColor:'#f1c40f', borderWidth:3, yAxisID:'y'},
+            {label:'走力', data:a.hist.map(h=>h.ab), borderColor:'#3498db', borderDash:[5,5], yAxisID:'y'},
+            {label:'資金(万円)', data:a.hist.map(h=>h.money/10000), borderColor:'#2ecc71', backgroundColor:'rgba(46,204,113,0.2)', fill:true, yAxisID:'y2'},
+            {label:'怪我', data:a.hist.map(h=>h.inj?h.ab:null), type:'scatter', backgroundColor:'#e74c3c', pointRadius:8, yAxisID:'y'}
+        ]}, options:{ responsive:true, maintainAspectRatio: false, scales:{ y:{reverse:true, title:{display:true, text:'タイム'}}, y2:{position:'right', title:{display:true, text:'資金(万円)'}, grid:{drawOnChartArea:false}} } }});
+        let pc = a.logs.map(l=>l.pb?'#f39c12':'#3498db');
+        charts.rac = new Chart(getEl('raceChart').getContext('2d'), { type:'line', data:{ labels:a.logs.map(l=>l.n), datasets:[{ label:'タイム', data:a.logs.map(l=>l.t), borderColor:'#bdc3c7', backgroundColor:'#3498db', pointBackgroundColor:pc, pointBorderColor:pc, pointRadius:a.logs.map(l=>l.pb?8:5) }] }, options:{responsive:true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{y:{reverse:true}}} });
+    }
+</script>
 </body>
 </html>
