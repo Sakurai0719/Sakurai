@@ -9,21 +9,81 @@
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f6; color: #333; margin: 0; padding: 10px; }
         .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .screen { display: none; }
-        .active { display: block; }
+        .screen { display: none !important; }
+        .screen.active { display: block !important; }
+        #screen-setup.active { display: flex !important; }
         button { transition: background 0.2s; }
         
-        .dashboard { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 768px) {
-            .dashboard { grid-template-columns: 2fr 1fr; }
+        /* 遠近法トラックアニメーション */
+        @keyframes track-flow {
+            0% { stroke-dashoffset: 200; }
+            100% { stroke-dashoffset: 0; }
         }
+        .anim-lane-line path {
+            stroke-dasharray: 100 100;
+            animation: track-flow 1s linear infinite;
+        }
+
+        /* 12原則を応用したタイポグラフィアニメーション */
+        @keyframes sprint-in {
+            0% { transform: translateX(-80px) skewX(-30deg) scaleX(1.3) scaleY(0.8); opacity: 0; }
+            40% { transform: translateX(10px) skewX(10deg) scaleX(0.9) scaleY(1.1); opacity: 1; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+            70% { transform: translateX(-4px) skewX(-5deg) scaleX(1.05) scaleY(0.95); }
+            100% { transform: translateX(0) skewX(-12deg) scaleX(1) scaleY(1); opacity: 1; }
+        }
+        @keyframes char-hover {
+            0%, 100% { transform: translateY(0) skewX(-12deg); }
+            50% { transform: translateY(-3px) skewX(-12deg); }
+        }
+        .title-char {
+            display: inline-block; opacity: 0;
+            transform: skewX(-12deg);
+            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.6));
+            animation: sprint-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, char-hover 3s ease-in-out infinite alternate;
+            animation-delay: calc(var(--i) * 0.06s), calc(1s + var(--i) * 0.1s);
+            padding: 0.1em; margin-top: -0.1em; margin-bottom: -0.1em;
+        }
+
+        @keyframes slide-in-fade {
+            0% { transform: translateX(-30px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .anim-list-item { opacity: 0; animation: slide-in-fade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .anim-list-item:nth-child(1) { animation-delay: 0.8s; }
+        .anim-list-item:nth-child(2) { animation-delay: 1.0s; }
+        .anim-list-item:nth-child(3) { animation-delay: 1.2s; }
+        
+        @keyframes float-whistle { 0%, 100% { transform: translateY(0) rotate(-10deg); } 50% { transform: translateY(-4px) rotate(10deg); } }
+        .anim-float-whistle { animation: float-whistle 2.5s ease-in-out infinite; }
+        @keyframes gentle-shake { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-2px) rotate(-3deg); } 75% { transform: translateX(2px) rotate(3deg); } }
+        @keyframes rotate-3d { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+        @keyframes gentle-pulse { 0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.5));} 50% { transform: scale(1.1); opacity: 0.9; filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));} }
+        .anim-shake { animation: gentle-shake 1.5s ease-in-out infinite; }
+        .anim-spin-3d { animation: rotate-3d 4s ease-in-out infinite; }
+        .anim-pulse { animation: gentle-pulse 2s ease-in-out infinite; }
+
+        @keyframes smash-in {
+            0% { transform: scale(5) rotate(10deg); opacity: 0; }
+            50% { transform: scale(0.9) rotate(-2deg); opacity: 1; }
+            70% { transform: scale(1.05) rotate(1deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .anim-smash { animation: smash-in 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes flash-bg {
+            0% { background-color: rgba(255,255,255,1); opacity: 1; }
+            10% { background-color: rgba(255,255,255,1); opacity: 1; }
+            100% { background-color: rgba(255,255,255,0.8); opacity: 0; }
+        }
+        .anim-flash { animation: flash-bg 3s ease-out forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+
+        .dashboard { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .dashboard { grid-template-columns: 2fr 1fr; } }
         .main-col { display: flex; flex-direction: column; gap: 20px; }
         .side-col { display: flex; flex-direction: column; gap: 20px; }
-        
         .panel { padding: 15px; border-radius: 5px; background: #ecf0f1; }
         .rival-panel { background: #fff; border: 1px solid #bdc3c7; padding: 15px; border-radius: 5px; }
         .shop-panel { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 5px; }
-        
         .log-area { margin-top: 20px; max-height: 250px; overflow-y: auto; background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 14px; line-height: 1.5; }
         .coach-comment { background: #dff9fb; border-left: 5px solid #22a6b3; padding: 10px; margin-top: 10px; font-weight: bold; border-radius: 3px; }
         .highlight { color: #f1c40f; font-weight: bold; }
@@ -45,11 +105,9 @@
         .toast.medal { background: rgba(241, 196, 15, 0.95); color: #2c3e50;}
         @keyframes pop { 0% { opacity:0; transform:scale(0.5); } 15%,80% { opacity:1; transform:scale(1); } 100% { opacity:0; transform:scale(1.2); } }
         
-        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
-
         .medal-gold { color: #f1c40f; font-size: 18px;} .medal-silver { color: #bdc3c7; font-size: 18px;} .medal-bronze { color: #cd7f32; font-size: 18px;}
         
-        #race-canvas-container { width: 100%; background: #2c3e50; border-radius: 8px; padding: 10px 0; overflow: hidden; display: flex; justify-content: center; }
+        #race-canvas-container { width: 100%; background: #2c3e50; border-radius: 8px; padding: 10px 0; overflow: hidden; display: flex; justify-content: center; transition: background 0.5s; }
         canvas#raceCanvas { display: block; max-width: 100%; height: auto !important; }
 
         .relay-box { background: #fdfefe; border: 2px solid #bdc3c7; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
@@ -61,7 +119,6 @@
         
         .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #95a5a6; color: white; border-radius: 50%; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 4px; vertical-align: middle; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .help-icon:hover { background: #34495e; transform: scale(1.1); }
-
         details > summary { list-style: none; outline: none; }
         details > summary::-webkit-details-marker { display: none; }
 
@@ -69,44 +126,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* 遠近法トラックアニメーション */
-        @keyframes track-flow { 0% { stroke-dashoffset: 200; } 100% { stroke-dashoffset: 0; } }
-        .anim-lane-line path { stroke-dasharray: 100 100; animation: track-flow 1s linear infinite; }
-
-        /* 12原則を応用したタイポグラフィアニメーション */
-        @keyframes sprint-in {
-            0% { transform: translateX(-80px) skewX(-30deg) scaleX(1.3) scaleY(0.8); opacity: 0; }
-            40% { transform: translateX(10px) skewX(10deg) scaleX(0.9) scaleY(1.1); opacity: 1; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
-            70% { transform: translateX(-4px) skewX(-5deg) scaleX(1.05) scaleY(0.95); }
-            100% { transform: translateX(0) skewX(-12deg) scaleX(1) scaleY(1); opacity: 1; }
-        }
-        @keyframes char-hover { 0%, 100% { transform: translateY(0) skewX(-12deg); } 50% { transform: translateY(-3px) skewX(-12deg); } }
-        .title-char {
-            display: inline-block; opacity: 0; transform: skewX(-12deg); filter: drop-shadow(0 8px 10px rgba(0,0,0,0.6));
-            animation: sprint-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, char-hover 3s ease-in-out infinite alternate;
-            animation-delay: calc(var(--i) * 0.06s), calc(1s + var(--i) * 0.1s); padding: 0.1em; margin-top: -0.1em; margin-bottom: -0.1em;
-        }
-
-        @keyframes slide-in-fade { 0% { transform: translateX(-30px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-        .anim-list-item { opacity: 0; animation: slide-in-fade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        .anim-list-item:nth-child(1) { animation-delay: 0.8s; } .anim-list-item:nth-child(2) { animation-delay: 1.0s; } .anim-list-item:nth-child(3) { animation-delay: 1.2s; }
-        
-        @keyframes float-whistle { 0%, 100% { transform: translateY(0) rotate(-10deg); } 50% { transform: translateY(-4px) rotate(10deg); } }
-        .anim-float-whistle { animation: float-whistle 2.5s ease-in-out infinite; }
-        @keyframes gentle-shake { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-2px) rotate(-3deg); } 75% { transform: translateX(2px) rotate(3deg); } }
-        @keyframes rotate-3d { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
-        @keyframes gentle-pulse { 0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.5));} 50% { transform: scale(1.1); opacity: 0.9; filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));} }
-        .anim-shake { animation: gentle-shake 1.5s ease-in-out infinite; } .anim-spin-3d { animation: rotate-3d 4s ease-in-out infinite; } .anim-pulse { animation: gentle-pulse 2s ease-in-out infinite; }
-        
-        @keyframes smash-in { 0% { transform: scale(5) rotate(10deg); opacity: 0; } 50% { transform: scale(0.9) rotate(-2deg); opacity: 1; } 70% { transform: scale(1.05) rotate(1deg); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
-        .anim-smash { animation: smash-in 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes flash-bg { 0% { background-color: rgba(255,255,255,1); opacity: 1; } 10% { background-color: rgba(255,255,255,1); opacity: 1; } 100% { background-color: rgba(255,255,255,0.8); opacity: 0; } }
-        .anim-flash { animation: flash-bg 3s ease-out forwards; }
-        
-        /* 画面表示制御用追加 */
-        #screen-setup { display: none; }
-        #screen-setup.active { display: block; }
     </style>
 
     <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
@@ -172,10 +191,42 @@
             }
         };
     </script>
-    <!-- ▲▲▲ Firebase Online Ranking Setup ▲▲▲ -->
 </head>
 <body>
 <div id="toast-container"></div>
+
+<!-- 優勝特別演出オーバーレイ (ホワイトアウト＆巨大テキスト) -->
+<div id="champ-celeb" class="fixed inset-0 z-[10000] hidden flex items-center justify-center pointer-events-none">
+    <div id="champ-whiteout" class="absolute inset-0 bg-white opacity-0"></div>
+    <div id="champ-text" class="relative z-10 opacity-0 leading-tight"></div>
+</div>
+
+<!-- 👑 世界優勝セレブレーション モーダル (RTA登録用) -->
+<div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[10001] hidden"></div>
+<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 md:p-8 rounded-2xl z-[10002] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400 max-h-[90vh] flex-col">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-yellow-500 mb-3">👑 WORLD CHAMPION!</h2>
+    <p class="text-sm md:text-base text-gray-700 font-bold mb-4">ついに世界大会での優勝を果たしました！</p>
+    
+    <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar text-left mb-4">
+        <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-4">
+            <p class="font-bold text-gray-800 mb-2">👨‍💻 開発者 ハルノスケより</p>
+            <p id="celeb-msg" class="text-xs md:text-sm text-gray-700 leading-relaxed"></p>
+        </div>
+
+        <div id="celeb-rta-area" class="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg shadow-inner">
+            <h3 class="font-bold text-purple-800 mb-2 text-base md:text-lg">👑 世界優勝RTA 記録登録</h3>
+            <p class="text-xs md:text-sm text-gray-700 mb-2">クリアタイム: <span id="celeb-rta-time" class="font-extrabold text-purple-700 text-base md:text-lg"></span></p>
+            <input type="text" id="celeb-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border-2 border-purple-200 p-2 md:p-3 rounded w-full text-center font-bold mb-2 text-sm" value="ハルノスケ">
+            <div class="flex flex-col gap-2">
+                <button id="celeb-reg-btn" onclick="registerRTAFromCeleb()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 md:py-3 px-4 rounded shadow-md transition-transform transform hover:scale-105 w-full text-sm">送信してランキングに登録</button>
+                <button id="celeb-view-ranking-btn" onclick="openRankingModal()" style="display:none;" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md w-full text-sm">🏆 ランキングを見る</button>
+            </div>
+        </div>
+    </div>
+    <div class="pt-3 border-t border-gray-200 text-center">
+        <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-base w-full">次へ進む / 競技を続ける</button>
+    </div>
+</div>
 
 <!-- ヘルプ・エージェントモーダル -->
 <div id="help-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden" onclick="closeHelpModal()"></div>
@@ -196,51 +247,13 @@
     <div class="text-center"><button onclick="closeAgentModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold">閉じる</button></div>
 </div>
 
-<!-- 優勝特別演出オーバーレイ (ホワイトアウト＆巨大テキスト) -->
-<div id="champ-celeb" class="fixed inset-0 z-[10000] hidden flex items-center justify-center pointer-events-none">
-    <div id="champ-whiteout" class="absolute inset-0 bg-white opacity-0"></div>
-    <div id="champ-text" class="relative z-10 opacity-0 leading-tight"></div>
-</div>
-
-<!-- 👑 世界優勝セレブレーション モーダル（スクロール対応・閉じるボタン常時表示） -->
-<div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[9998] hidden"></div>
-<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 md:p-8 rounded-2xl z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400 max-h-[90vh] flex flex-col">
-    <h2 class="text-3xl md:text-4xl font-extrabold text-yellow-500 mb-3">👑 WORLD CHAMPION!</h2>
-    <p class="text-sm md:text-base text-gray-700 font-bold mb-4">ついに世界大会での優勝を果たしました！</p>
-    
-    <div class="overflow-y-auto flex-1 pr-2 custom-scrollbar text-left mb-4">
-        <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-4">
-            <p class="font-bold text-gray-800 mb-2">👨‍💻 開発者 ハルノスケより</p>
-            <p id="celeb-msg" class="text-xs md:text-sm text-gray-700 leading-relaxed"></p>
-        </div>
-
-        <!-- ▼ RTA即時登録エリア ▼ -->
-        <div id="celeb-rta-area" class="bg-purple-50 border-2 border-purple-300 p-4 rounded-lg shadow-inner">
-            <h3 class="font-bold text-purple-800 mb-2 text-base md:text-lg">👑 世界優勝RTA 記録登録</h3>
-            <p class="text-xs md:text-sm text-gray-700 mb-2">クリアタイム: <span id="celeb-rta-time" class="font-extrabold text-purple-700 text-base md:text-lg"></span></p>
-            <input type="text" id="celeb-player-name" placeholder="名前を入力 (例: ハルノスケ)" class="border-2 border-purple-200 p-2 md:p-3 rounded w-full text-center font-bold mb-2 text-sm" value="ハルノスケ">
-            <div class="flex flex-col gap-2">
-                <button id="celeb-reg-btn" onclick="registerRTAFromCeleb()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 md:py-3 px-4 rounded shadow-md transition-transform transform hover:scale-105 w-full text-sm">送信してランキングに登録</button>
-                <button id="celeb-view-ranking-btn" onclick="openRankingModal()" style="display:none;" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md w-full text-sm">🏆 ランキングを見る</button>
-            </div>
-        </div>
-        <!-- ▲ RTA即時登録エリア ▲ -->
-    </div>
-
-    <div class="pt-3 border-t border-gray-200 text-center">
-        <button onclick="closeCelebModal()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg text-base w-full">次へ進む / 競技を続ける</button>
-    </div>
-</div>
-
 <!-- 🏆 リッチデザイン ランキングモーダル -->
 <div id="ranking-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-[10000] hidden" onclick="closeRankingModal()"></div>
 <div id="ranking-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-100 p-4 rounded-2xl z-[10001] w-11/12 max-w-3xl max-h-[95vh] hidden shadow-2xl flex flex-col">
-    
     <div class="flex justify-between items-center mb-3">
         <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight">🏆 殿堂入りランキング</h2>
         <button onclick="closeRankingModal()" class="text-gray-400 hover:text-gray-800 font-bold text-xl">&times;</button>
     </div>
-
     <div class="flex flex-wrap gap-2 mb-4 justify-center" id="ranking-tabs">
         <button id="tab-btn-pb" onclick="showRankingTab('pb')">自己ベスト</button>
         <button id="tab-btn-pbDiff" onclick="showRankingTab('pbDiff')">成長幅</button>
@@ -249,17 +262,11 @@
         <button id="tab-btn-pbCount" onclick="showRankingTab('pbCount')">PB回数</button>
         <button id="tab-btn-rta" onclick="showRankingTab('rta')">世界優勝RTA</button>
     </div>
-
     <div id="ranking-screenshot-area" class="relative flex-1 bg-white border-2 border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden min-h-[300px]">
-        <div id="ranking-category-header" class="text-center py-4 text-white font-extrabold text-xl md:text-2xl shadow-md z-20 relative tracking-wide">
-            カテゴリータイトル
-        </div>
+        <div id="ranking-category-header" class="text-center py-4 text-white font-extrabold text-xl md:text-2xl shadow-md z-20 relative tracking-wide">カテゴリー</div>
         <div id="ranking-content" class="p-0 overflow-y-auto bg-white flex-1 custom-scrollbar"></div>
-        <div class="bg-gray-800 text-center py-2 text-xs md:text-sm text-gray-300 font-bold tracking-[0.2em] shadow-inner z-20 relative">
-            400m Track & Field Pro Simulation
-        </div>
+        <div class="bg-gray-800 text-center py-2 text-xs md:text-sm text-gray-300 font-bold tracking-[0.2em] shadow-inner z-20 relative">400m Track & Field Pro Simulation</div>
     </div>
-
     <div class="text-center mt-4">
         <p class="text-xs text-gray-500 mb-2 font-bold">💡 上の枠内をスクショしてシェアしよう！</p>
         <button onclick="closeRankingModal()" class="bg-gray-700 hover:bg-gray-800 text-white px-10 py-3 rounded-full font-bold shadow-lg transition-transform transform hover:scale-105 w-full md:w-auto">閉じる</button>
@@ -267,9 +274,7 @@
 </div>
 
 <!-- 豪華版タイトル画面 -->
-<div id="screen-setup" class="screen active fixed inset-0 z-[100] bg-slate-950 font-sans">
-    
-    <!-- 背景トラック (固定) -->
+<div id="screen-setup" class="screen active fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950 overflow-hidden font-sans">
     <div class="absolute inset-0 overflow-hidden pointer-events-none z-0 flex justify-center items-end" style="perspective: 600px;">
         <div class="w-[300%] h-[200%] absolute bottom-0" style="transform: rotateX(80deg); transform-origin: bottom center;">
             <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1000 1000">
@@ -283,64 +288,60 @@
         <div class="absolute inset-0 bg-slate-950/30"></div>
     </div>
 
-    <!-- コンテンツ部分 (スクロール保護付き) -->
-    <div class="relative z-20 w-full h-[100dvh] overflow-y-auto flex flex-col items-center justify-start sm:justify-center p-4">
-        <div class="w-full max-w-lg flex flex-col items-center py-6 md:py-10 my-auto">
+    <div class="relative z-20 w-full max-w-lg flex flex-col items-center p-6 mt-4 md:mt-10">
+        <div class="flex items-baseline justify-center mb-6 font-black w-full" style="line-height: 1;">
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:0; letter-spacing: -0.05em; margin-right: -0.02em;">ハ</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:1; letter-spacing: -0.05em; margin-right: -0.02em;">ル</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:2; letter-spacing: -0.08em; margin-right: -0.04em;">ノ</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:3; letter-spacing: -0.05em; margin-right: -0.02em;">ス</span>
+            <span class="title-char text-white text-5xl sm:text-6xl md:text-7xl" style="--i:4; margin-right: -0.05em;">ケ</span>
             
-            <div class="flex items-baseline justify-center mb-4 md:mb-6 font-black w-full" style="line-height: 1;">
-                <span class="title-char text-white text-4xl sm:text-5xl md:text-6xl" style="--i:0; letter-spacing: -0.05em; margin-right: -0.02em;">ハ</span>
-                <span class="title-char text-white text-4xl sm:text-5xl md:text-6xl" style="--i:1; letter-spacing: -0.05em; margin-right: -0.02em;">ル</span>
-                <span class="title-char text-white text-4xl sm:text-5xl md:text-6xl" style="--i:2; letter-spacing: -0.08em; margin-right: -0.04em;">ノ</span>
-                <span class="title-char text-white text-4xl sm:text-5xl md:text-6xl" style="--i:3; letter-spacing: -0.05em; margin-right: -0.02em;">ス</span>
-                <span class="title-char text-white text-4xl sm:text-5xl md:text-6xl" style="--i:4; margin-right: -0.05em;">ケ</span>
-                
-                <span class="title-char text-cyan-400 text-2xl sm:text-3xl md:text-4xl font-serif" style="--i:5; letter-spacing: -0.1em; margin-right: -0.08em;">育</span>
-                <span class="title-char text-cyan-400 text-2xl sm:text-3xl md:text-4xl font-serif" style="--i:6; margin-right: 0;">成</span>
-                
-                <span class="title-char text-slate-300 text-3xl sm:text-4xl md:text-5xl" style="--i:7; letter-spacing: -0.08em; margin-right: -0.02em;">ゲ</span>
-                <span class="title-char text-slate-300 text-3xl sm:text-4xl md:text-5xl" style="--i:8; letter-spacing: -0.1em; margin-right: -0.04em;">ー</span>
-                <span class="title-char text-slate-300 text-3xl sm:text-4xl md:text-5xl" style="--i:9;">ム</span>
-            </div>
-            <p class="text-cyan-200/80 font-bold tracking-[0.2em] md:tracking-[0.3em] text-[10px] md:text-xs mt-0 uppercase shadow-black drop-shadow-md z-20 mb-6 md:mb-8 text-center">400m Track & Field Pro Simulation</p>
-
-            <div class="bg-slate-900/85 backdrop-blur-md border border-slate-700/50 p-4 md:p-5 rounded-xl md:rounded-2xl w-full mb-4 md:mb-6 shadow-2xl relative overflow-hidden">
-                <div class="absolute -top-5 left-3 bg-slate-800 border-2 border-slate-600 rounded-full p-1.5 md:p-2 shadow-lg anim-float-whistle">
-                    <svg class="w-6 h-6 md:w-8 md:h-8 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a3 3 0 0 1 3 3v2h2v2h-2v1a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-1H2v-2h2V10a3 3 0 0 1 3-3h1V5.73A2 2 0 0 1 12 2zm-1 9a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0v-3a1 1 0 1 0-1-1zM20 7a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V8a1 1 0 0 1 1-1z"/></svg>
-                </div>
-                <h2 class="text-base md:text-lg font-bold text-slate-100 ml-10 md:ml-12 mb-3 md:mb-4">プロへの道しるべ</h2>
-                <ul class="text-xs md:text-sm text-slate-300 space-y-3 md:space-y-4 font-medium">
-                    <li class="flex items-start anim-list-item">
-                        <div class="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 flex-shrink-0 text-cyan-400 anim-shake"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg></div>
-                        <div><span class="text-white font-bold">1. 練習で走力を上げよう</span><br><span class="text-[10px] md:text-xs text-slate-400">練習量を調整しタイムを縮めます。</span></div>
-                    </li>
-                    <li class="flex items-start anim-list-item">
-                        <div class="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 flex-shrink-0 text-yellow-400 anim-spin-3d"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.11 1.71 1.25 2.85 2.9 3.2V19h2.32v-1.66c1.64-.37 2.88-1.44 2.88-3 0-2.12-1.85-2.8-3.79-3.2z"/></svg></div>
-                        <div><span class="text-white font-bold">2. 大会で賞金を稼ごう</span><br><span class="text-[10px] md:text-xs text-slate-400">賞金で自己投資しましょう。</span></div>
-                    </li>
-                    <li class="flex items-start anim-list-item">
-                        <div class="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 flex-shrink-0 text-red-400 anim-pulse"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35zM9 9H7v2h2v2h2v-2h2V9h-2V7H9v2z"/></svg></div>
-                        <div><span class="text-red-300 font-bold">3. 怪我のリスクを管理</span><br><span class="text-[10px] md:text-xs text-red-400/80">練習しすぎると怪我します。</span></div>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="w-full bg-slate-900/80 p-3 md:p-4 rounded-xl border border-slate-700 mb-4 md:mb-6 relative z-30">
-                <label class="font-bold text-xs md:text-sm text-slate-300 mb-2 flex justify-between items-center">
-                    <span>🏃 レース展開作戦</span>
-                    <span class="help-icon bg-slate-700 text-slate-300 border-none cursor-pointer hover:bg-slate-600" onclick="showHelp('strategy')">?</span>
-                </label>
-                <select id="player-strategy" class="w-full p-2 md:p-3 bg-slate-950 border border-slate-700 text-white rounded-lg focus:outline-none focus:border-cyan-500 appearance-none font-bold text-sm md:text-base">
-                    <option value="FRONT">先行型 (前半から突っ込む)</option>
-                    <option value="EVEN" selected>バランス型 (イーブンペース)</option>
-                    <option value="BACK">後半型 (ラストスパート)</option>
-                </select>
-            </div>
-
-            <button onclick="startGame()" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black py-3 md:py-4 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 hover:-translate-y-1 text-lg md:text-xl tracking-widest relative overflow-hidden group border border-cyan-400/50">
-                <span class="relative z-10">プロの世界へ</span>
-                <div class="absolute inset-0 h-full w-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
-            </button>
+            <span class="title-char text-cyan-400 text-3xl sm:text-4xl md:text-5xl font-serif" style="--i:5; letter-spacing: -0.1em; margin-right: -0.08em;">育</span>
+            <span class="title-char text-cyan-400 text-3xl sm:text-4xl md:text-5xl font-serif" style="--i:6; margin-right: 0;">成</span>
+            
+            <span class="title-char text-slate-300 text-4xl sm:text-5xl md:text-6xl" style="--i:7; letter-spacing: -0.08em; margin-right: -0.02em;">ゲ</span>
+            <span class="title-char text-slate-300 text-4xl sm:text-5xl md:text-6xl" style="--i:8; letter-spacing: -0.1em; margin-right: -0.04em;">ー</span>
+            <span class="title-char text-slate-300 text-4xl sm:text-5xl md:text-6xl" style="--i:9;">ム</span>
         </div>
+        <p class="text-cyan-200/80 font-bold tracking-[0.3em] text-xs md:text-sm mt-0 uppercase shadow-black drop-shadow-md z-20 mb-8">400m Track & Field Pro Simulation</p>
+
+        <div class="bg-slate-900/85 backdrop-blur-md border border-slate-700/50 p-5 rounded-2xl w-full mb-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-6 left-4 bg-slate-800 border-2 border-slate-600 rounded-full p-2 shadow-lg anim-float-whistle">
+                <svg class="w-8 h-8 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a3 3 0 0 1 3 3v2h2v2h-2v1a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-1H2v-2h2V10a3 3 0 0 1 3-3h1V5.73A2 2 0 0 1 12 2zm-1 9a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0v-3a1 1 0 1 0-1-1zM20 7a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V8a1 1 0 0 1 1-1z"/></svg>
+            </div>
+            <h2 class="text-lg font-bold text-slate-100 ml-12 mb-4">プロへの道しるべ</h2>
+            <ul class="text-sm text-slate-300 space-y-4 font-medium">
+                <li class="flex items-start anim-list-item">
+                    <div class="w-6 h-6 mr-3 flex-shrink-0 text-cyan-400 anim-shake"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg></div>
+                    <div><span class="text-white font-bold">1. 練習で走力を上げよう</span><br><span class="text-xs text-slate-400">練習量を調整し、ベースとなるタイムを縮めます。</span></div>
+                </li>
+                <li class="flex items-start anim-list-item">
+                    <div class="w-6 h-6 mr-3 flex-shrink-0 text-yellow-400 anim-spin-3d"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.1-.96-2.17-1.92H8c.11 1.71 1.25 2.85 2.9 3.2V19h2.32v-1.66c1.64-.37 2.88-1.44 2.88-3 0-2.12-1.85-2.8-3.79-3.2z"/></svg></div>
+                    <div><span class="text-white font-bold">2. 大会で賞金を稼ごう</span><br><span class="text-xs text-slate-400">賞金でスパイクやケア道具を買い、自己投資しましょう。</span></div>
+                </li>
+                <li class="flex items-start anim-list-item">
+                    <div class="w-6 h-6 mr-3 flex-shrink-0 text-red-400 anim-pulse"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35zM9 9H7v2h2v2h2v-2h2V9h-2V7H9v2z"/></svg></div>
+                    <div><span class="text-red-300 font-bold">3. 怪我のリスクを管理</span><br><span class="text-xs text-red-400/80">練習しすぎると怪我をしてしまいます。疲労管理が鍵です。</span></div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="w-full bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-6 relative z-30">
+            <label class="font-bold text-sm text-slate-300 mb-2 flex justify-between items-center">
+                <span>🏃 レース展開作戦</span>
+                <span class="help-icon bg-slate-700 text-slate-300 border-none cursor-pointer hover:bg-slate-600" onclick="showHelp('strategy')">?</span>
+            </label>
+            <select id="player-strategy" class="w-full p-3 bg-slate-950 border border-slate-700 text-white rounded-lg focus:outline-none focus:border-cyan-500 appearance-none font-bold">
+                <option value="FRONT">先行型 (前半から突っ込む)</option>
+                <option value="EVEN" selected>バランス型 (イーブンペース)</option>
+                <option value="BACK">後半型 (ラストスパート)</option>
+            </select>
+        </div>
+
+        <button onclick="startGame()" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 hover:-translate-y-1 text-xl tracking-widest relative overflow-hidden group border border-cyan-400/50">
+            <span class="relative z-10">プロの世界へ</span>
+            <div class="absolute inset-0 h-full w-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+        </button>
     </div>
 </div>
 
@@ -474,7 +475,6 @@
                     <div class="mb-3 text-base font-bold text-gray-800 bg-white p-3 rounded border text-center shadow-sm">
                         所持金: <span id="my-money" class="text-green-600 text-xl">100,000</span> 円
                     </div>
-                    
                     <details class="group bg-white rounded border mb-2 shadow-sm transition-all duration-300">
                         <summary class="p-3 font-bold text-sm cursor-pointer flex justify-between items-center bg-blue-50 hover:bg-blue-100 rounded-t">
                             <span>💆 ケア道具 <span class="text-xs text-gray-500 font-normal ml-1">(Lv.<span id="care-lv">0</span>)</span></span>
@@ -489,7 +489,6 @@
                             <button id="btn-buy-care" onclick="buyItem('care')" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-2 rounded shadow">購入: <span id="care-cost">3000</span>円</button>
                         </div>
                     </details>
-                    
                     <details class="group bg-white rounded border mb-3 shadow-sm transition-all duration-300">
                         <summary class="p-3 font-bold text-sm cursor-pointer flex justify-between items-center bg-red-50 hover:bg-red-100 rounded-t">
                             <span>👟 スパイク <span class="text-xs text-gray-500 font-normal ml-1">(Lv.<span id="spike-lv">0</span>)</span></span>
@@ -504,7 +503,6 @@
                             <button id="btn-buy-spike" onclick="buyItem('spike')" class="w-full bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 rounded shadow">購入: <span id="spike-cost">5000</span>円</button>
                         </div>
                     </details>
-
                     <div class="bg-white p-3 rounded border shadow-sm">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-bold text-sm">🥩 特別食 <span class="text-xs text-gray-500 font-normal ml-1">(1回/期)</span></span>
@@ -631,7 +629,7 @@
             div.style.animation = `fall ${Math.random()*2+2.5}s linear forwards`;
             div.style.transform = `rotate(${Math.random()*360}deg)`;
             document.body.appendChild(div);
-            setTimeout(()=>div.remove(), 4500);
+            setTimeout(()=>div.remove(), 6000);
         }
     }
 
@@ -643,16 +641,80 @@
         
         let champText = type === 'JAPAN' ? "JAPAN<br>CHAMPION" : "WORLD<br>CHAMPION";
         
-        // シンプルな白文字に、重厚なドロップシャドウを適用
         textEl.innerHTML = champText;
         textEl.className = "text-center text-6xl md:text-8xl font-black text-white drop-shadow-[0_15px_15px_rgba(0,0,0,0.8)] anim-smash leading-tight";
-        
         bgEl.className = "absolute inset-0 bg-white anim-flash";
         triggerConfetti(type === 'WORLD');
         
         setTimeout(() => {
             overlay.classList.add('hidden');
         }, 4000);
+    }
+
+    function showCelebration(time, clearStr) {
+        getEl('celeb-modal-overlay').style.display = 'block';
+        getEl('celeb-modal').style.display = 'flex';
+        
+        let msg = `ハルノスケを世界最強まで育ててくれてありがとう！<br>現実のハルノスケも最後まで陸上頑張ります！<br>今度会った時に感想教えてね`;
+        if (time >= 43.03) {
+            msg += `<br><br><span class="text-xs text-red-600 font-bold">※次は世界記録(43.03秒未満)の更新を目指してね！</span>`;
+        }
+        getEl('celeb-msg').innerHTML = msg;
+        getEl('celeb-rta-time').innerText = clearStr;
+        
+        let btn = getEl('celeb-reg-btn');
+        let viewBtn = getEl('celeb-view-ranking-btn');
+        if(window.hasRegisteredRTA) {
+            btn.disabled = true;
+            btn.innerText = "登録済み";
+            btn.className = "bg-gray-500 text-white font-bold py-2 px-4 rounded shadow-md cursor-not-allowed w-full text-sm";
+            viewBtn.style.display = 'block';
+        } else {
+            btn.disabled = false;
+            btn.innerText = "送信してランキングに登録";
+            btn.className = "bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow-md transition-transform transform hover:scale-105 w-full text-sm";
+            viewBtn.style.display = 'none';
+        }
+    }
+
+    async function registerRTAFromCeleb() {
+        if(window.hasRegisteredRTA) return;
+        let name = getEl('celeb-player-name').value.trim() || '名無し';
+        let btn = getEl('celeb-reg-btn');
+        btn.disabled = true;
+        btn.innerText = "送信中...";
+
+        const loop = state.loopCount || 1;
+        const yearNum = state.year || 1;
+        const season = state.seasonIndex || 0;
+        const totalTurns = ((loop - 1) * 16) + ((yearNum - 1) * 4) + (season + 1);
+        const seasonNames = ["春", "夏", "秋", "冬"];
+        const displayString = `人生${loop}周目 ${yearNum}年目 ${seasonNames[season]} (計${totalTurns}ターン)`;
+
+        let entry = { name: name, val: Number(totalTurns), text: displayString, date: new Date().toLocaleDateString() };
+        
+        let r = JSON.parse(localStorage.getItem('tfs_rankings')) || { pb: [], pbDiff: [], injury: [], money: [], pbCount: [], rta: [] };
+        if(!r.rta) r.rta = [];
+        r.rta.push(entry);
+        r.rta.sort((a,b) => Number(a.val) - Number(b.val));
+
+        let onlineSuccess = false;
+        if (window.saveRankingOnline) {
+            try { onlineSuccess = await window.saveRankingOnline('rta', entry); } catch(e) {}
+        }
+
+        localStorage.setItem('tfs_rankings', JSON.stringify(r));
+        window.hasRegisteredRTA = true;
+
+        btn.innerText = "登録完了！";
+        btn.className = "bg-gray-500 text-white font-bold py-2 px-4 rounded shadow-md cursor-not-allowed w-full text-sm";
+        getEl('celeb-view-ranking-btn').style.display = 'block';
+        showToast(onlineSuccess ? "👑 オンラインランキング登録成功！" : "ローカル登録しました", "success");
+    }
+
+    function closeCelebModal() {
+        getEl('celeb-modal-overlay').style.display = 'none';
+        getEl('celeb-modal').style.display = 'none';
     }
 
     function showHelpModalCustom(title, descHtml) {
