@@ -97,7 +97,7 @@
         .clickable-row { cursor: pointer; transition: 0.2s; }
         .clickable-row:hover { opacity: 0.8; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
         
-        #toast-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99999; display: none; text-align: center; pointer-events: none;}
+        #toast-container { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; display: none; text-align: center; pointer-events: none;}
         .toast { background: rgba(44, 62, 80, 0.95); color: white; padding: 25px 50px; border-radius: 12px; font-size: 24px; font-weight: bold; line-height: 1.4; animation: pop 1.5s forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .toast.pb { background: rgba(243, 156, 18, 0.95); }
         .toast.success { background: rgba(39, 174, 96, 0.95); }
@@ -636,7 +636,6 @@
     function playChampCelebration(type) {
         let overlay = getEl('champ-celeb');
         overlay.classList.remove('hidden');
-        overlay.style.display = 'flex';
         let textEl = getEl('champ-text');
         let bgEl = getEl('champ-whiteout');
         
@@ -649,14 +648,11 @@
         
         setTimeout(() => {
             overlay.classList.add('hidden');
-            overlay.style.display = 'none';
         }, 4000);
     }
 
     function showCelebration(time, clearStr) {
-        getEl('celeb-modal-overlay').classList.remove('hidden');
         getEl('celeb-modal-overlay').style.display = 'block';
-        getEl('celeb-modal').classList.remove('hidden');
         getEl('celeb-modal').style.display = 'flex';
         
         let msg = `ハルノスケを世界最強まで育ててくれてありがとう！<br>現実のハルノスケも最後まで陸上頑張ります！<br>今度会った時に感想教えてね`;
@@ -717,18 +713,14 @@
     }
 
     function closeCelebModal() {
-        getEl('celeb-modal-overlay').classList.add('hidden');
         getEl('celeb-modal-overlay').style.display = 'none';
-        getEl('celeb-modal').classList.add('hidden');
         getEl('celeb-modal').style.display = 'none';
     }
 
     function showHelpModalCustom(title, descHtml) {
         getEl('help-title').innerText = title;
         getEl('help-desc').innerHTML = descHtml;
-        getEl('help-modal-overlay').classList.remove('hidden');
         getEl('help-modal-overlay').style.display = 'block';
-        getEl('help-modal').classList.remove('hidden');
         getEl('help-modal').style.display = 'block';
     }
 
@@ -758,15 +750,13 @@
         if(helpTexts[key] && getEl('help-title')) {
             getEl('help-title').innerText = helpTexts[key].t;
             getEl('help-desc').innerHTML = helpTexts[key].d;
-            getEl('help-modal-overlay').classList.remove('hidden');
             getEl('help-modal-overlay').style.display = 'block';
-            getEl('help-modal').classList.remove('hidden');
             getEl('help-modal').style.display = 'block';
         }
     }
     function closeHelpModal() {
-        if(getEl('help-modal-overlay')) { getEl('help-modal-overlay').classList.add('hidden'); getEl('help-modal-overlay').style.display = 'none'; }
-        if(getEl('help-modal')) { getEl('help-modal').classList.add('hidden'); getEl('help-modal').style.display = 'none'; }
+        if(getEl('help-modal-overlay')) getEl('help-modal-overlay').style.display = 'none';
+        if(getEl('help-modal')) getEl('help-modal').style.display = 'none';
     }
 
     const UNIVS = ["筑波大学", "早稲田大学", "順天堂大学", "日本大学", "東海大学", "法政大学", "東洋大学", "中央大学", "日本体育大学", "慶應義塾大学", "城西大学"];
@@ -1403,13 +1393,6 @@
         let btn = getEl('tourney-next-btn');
         if (isKanto) { btn.innerText = "🔥 マイルリレーへ"; btn.onclick = executeRelay; }
         else { btn.innerText = isSelection ? "ダッシュボードへ戻る" : "⏭️ 次のシーズンへ"; btn.onclick = closeTournamentScreen; }
-
-        if (isChamp) {
-            btn.style.display = 'none';
-            setTimeout(() => { btn.style.display = 'inline-block'; }, 4500);
-        } else {
-            btn.style.display = 'inline-block';
-        }
         
         let isPlayerIn = pData.some(d => d.a.isPlayer);
         if (isSelection) {
@@ -1654,8 +1637,7 @@
     function showAgentModal(id) {
         let a = agents.find(ag => ag.id === id); if (!a) return;
         getEl('modal-agent-name').innerText = `📈 記録推移: ${a.name} ${a.univ !== UNIVS[0] ? `(${a.univ})` : ''} ${a.isActive?'':'(引退)'}`;
-        getEl('agent-modal-overlay').classList.remove('hidden'); getEl('agent-modal-overlay').style.display = 'block';
-        getEl('agent-modal').classList.remove('hidden'); getEl('agent-modal').style.display = 'block';
+        getEl('agent-modal-overlay').style.display = 'block'; getEl('agent-modal').style.display = 'block';
 
         if (modalChart) modalChart.destroy(); let pc = a.logs.map(l => l.pb ? '#f39c12' : '#3498db');
         modalChart = new Chart(getEl('modal-race-chart').getContext('2d'), {
@@ -1664,21 +1646,9 @@
         });
     }
 
-    function closeAgentModal() { 
-        getEl('agent-modal-overlay').classList.add('hidden'); getEl('agent-modal-overlay').style.display = 'none';
-        getEl('agent-modal').classList.add('hidden'); getEl('agent-modal').style.display = 'none';
-    }
-
-    function openRankingModal() { 
-        getEl('ranking-modal-overlay').classList.remove('hidden'); getEl('ranking-modal-overlay').style.display = 'block';
-        getEl('ranking-modal').classList.remove('hidden'); getEl('ranking-modal').style.display = 'flex';
-        showRankingTab('pb'); 
-    }
-
-    function closeRankingModal() { 
-        getEl('ranking-modal-overlay').classList.add('hidden'); getEl('ranking-modal-overlay').style.display = 'none';
-        getEl('ranking-modal').classList.add('hidden'); getEl('ranking-modal').style.display = 'none';
-    }
+    function closeAgentModal() { getEl('agent-modal-overlay').style.display = 'none'; getEl('agent-modal').style.display = 'none'; }
+    function openRankingModal() { getEl('ranking-modal-overlay').style.display = 'block'; getEl('ranking-modal').style.display = 'flex'; showRankingTab('pb'); }
+    function closeRankingModal() { getEl('ranking-modal-overlay').style.display = 'none'; getEl('ranking-modal').style.display = 'none'; }
 
     async function registerToRanking() {
         let name = getEl('ranking-player-name').value.trim() || '名無し'; let p = agents[pId]; let pData = { name: name, date: new Date().toLocaleDateString() }; let entries = [];
@@ -1782,17 +1752,14 @@
         getEl('result-agent-select').innerHTML = t.map(a => `<option value="${a.id}" ${a.isPlayer?'selected':''}>${a.name}${a.isActive?'':'(引退)'} (${a.pb.toFixed(2)}秒 / ${(a.money||0).toLocaleString()}円)</option>`).join('');
         drawResult();
 
-        let regArea = getEl('ranking-registration-area');
         if (!hasRegisteredRanking && (!isNGPFlag || (hasClearedThisRun && gameClearRTA > 0))) {
-            regArea.classList.remove('hidden');
-            regArea.style.display = 'block';
+            getEl('ranking-registration-area').style.display = 'block';
             let desc = '';
             if (!isNGPFlag) desc += '🌟 1周目限定の全5部門にエントリー可能！<br>';
             if (hasClearedThisRun) desc += `⏱️ 世界優勝RTA（${clearTimeString}）の記録が保存されます！`;
             getEl('ranking-reg-desc').innerHTML = desc;
         } else {
-            regArea.classList.add('hidden');
-            regArea.style.display = 'none';
+            getEl('ranking-registration-area').style.display = 'none';
         }
     }
 
