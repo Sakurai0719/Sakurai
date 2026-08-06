@@ -165,7 +165,7 @@
 
 <!-- 👑 世界優勝セレブレーション モーダル -->
 <div id="celeb-modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 z-[9998] hidden"></div>
-<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400">
+<div id="celeb-modal" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg z-[9999] w-11/12 max-w-lg hidden shadow-2xl text-center border-4 border-yellow-400 max-h-[90vh] overflow-y-auto">
     <h2 class="text-4xl font-extrabold text-yellow-500 mb-4">👑 WORLD CHAMPION!</h2>
     <p class="text-lg text-gray-700 font-bold mb-6">ついに世界大会での優勝を果たしました！</p>
     
@@ -792,7 +792,15 @@
         qualified_3_4: ["上級生としての意地を見せたな。本戦でも頼むぞ。","当然の結果だ。お前がチームを引っ張らなきゃ誰がやるんだ。","お前の走りでチームに勢いをつけてこい。期待してるぞ。"],
         not_qualified_1_2: ["スタンドからの応援、悔しいか？来年はトラックに立て。","これがレベルの差だ。自分の現在地を知るいい機会になったな。","今はただ声を枯らせ。来年は実力で枠を奪い取れ。"],
         not_qualified_3: ["後輩に枠を奪われて恥ずかしくないのか？意地を見せろ。","もう『来年がある』なんて甘い言葉は通用しない時期だぞ。","チームを引っ張るべき3年が何やってるんだ。情けない。"],
-        not_qualified_4: ["最後の年でスタンドか。これが4年間のお前の実力だ。","出られないお前の分まで走る仲間のために声を出せ。","引退までサポートに徹しろ。それがお前の最後の仕事だ。"]
+        not_qualified_4: ["最後の年でスタンドか。これが4年間のお前の実力だ。","出られないお前の分まで走る仲間のために声を出せ。","引退までサポートに徹しろ。それがお前の最後の仕事だ。"],
+        over_国際大会: ["世界レベルで入賞とは恐れ入った。次はメダルを狙えるぞ！", "世界のトップ8に入るなんて信じられない。日本の誇りだ！"],
+        over_日本選手権: ["日本選手権での入賞、見事だ。実業団のスカウトも注目してるぞ。", "日本のトップレベルに名を連ねたな！"],
+        skip_日本選手権: ["日本選手権の標準も切れないとはな。夏に死ぬ気で走力上げろ。"],
+        skip_国際大会: ["世界への切符は甘くない。冬に地獄を見る覚悟はあるか？"],
+        rec_student_日本選手権: ["日本選手権の大舞台で学生新記録！これは歴史に残るレースだ。"],
+        rec_japan_日本選手権: ["日本選手権での日本新記録！文句なしの日本最速だ！"],
+        rec_japan_国際大会: ["世界大会での日本新！この記録は日本の陸上史に永遠に刻まれるぞ！"],
+        rec_world_国際大会: ["世界大会で世界新記録…！？お前は神か！！"]
     };
 
     const getRandomComment = (category) => {
@@ -816,16 +824,18 @@
         
         let category = 'effort_normal_summer';
 
-        // 優先度をつけてカテゴリを判定する
         if (ev === 'first_look') category = 'first_look';
-        else if (ev === 'rec_world') category = 'rec_world';
-        else if (ev === 'rec_japan') category = 'rec_japan';
-        else if (ev === 'rec_student') category = 'rec_student';
         else if (ev === 'win') category = isInjured ? 'win_inj' : 'win';
         else if (ev === 'med') category = isInjured ? 'med_inj' : 'med';
-        else if (ev === 'qualified') category = isInjured ? 'qualified_inj' : `qualified_${gradeGrp}`;
-        else if (ev === 'not_qualified') category = isInjured ? 'not_qualified_inj' : (grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4');
-        else if (ev === 'inj') category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
+        else if (ev.startsWith('rec_')) {
+            if ((tName === '日本選手権' || tName === '国際大会') && coachComments[`${ev}_${tName}`]) {
+                category = `${ev}_${tName}`;
+            } else {
+                category = ev;
+            }
+        } else if (ev === 'inj' || (isInjured && ['over', 'under', 'pb', 'normal_effort'].includes(ev))) {
+            category = grade <= 2 ? 'inj_1_2' : grade === 3 ? 'inj_3' : 'inj_4';
+        } else if (ev === 'skip') category = `skip_${tName}` in coachComments ? `skip_${tName}` : 'not_qualified_1_2';
         else if (ev === 'pb') {
             let pbCount = p.logs.filter(l => l.pb).length;
             let recentPbs = p.logs.slice(-3).filter(l => l.pb).length;
@@ -834,10 +844,12 @@
             else if (grade <= 2) category = 'pb_1_2';
             else if (grade === 3) category = 'pb_3';
             else category = 'pb_4';
-        } 
-        else if (ev === 'under') category = `under_${gradeGrp}`;
-        else if (ev === 'over') category = 'over';
+        } else if (ev === 'over') {
+            category = coachComments[`over_${tName}`] ? `over_${tName}` : 'over';
+        } else if (ev === 'under') category = `under_${gradeGrp}`;
         else if (ev === 'relay') category = `relay_${gradeGrp}`;
+        else if (ev === 'not_qualified') category = isInjured ? 'not_qualified_inj' : (grade <= 2 ? 'not_qualified_1_2' : grade === 3 ? 'not_qualified_3' : 'not_qualified_4');
+        else if (ev === 'qualified') category = isInjured ? 'qualified_inj' : `qualified_${gradeGrp}`;
         else {
             let suffix = isWinter ? '_winter' : '_summer';
             if (e >= 8.0) category = 'effort_high' + suffix;
@@ -845,10 +857,10 @@
             else category = 'effort_normal' + suffix;
         }
 
-        // 大会別・学年別コメントの上書き (怪我していない場合のみ大会専用コメントを優先)
-        if (tName && !isInjured && (ev === 'win' || ev === 'med' || ev === 'over' || ev === 'under' || ev === 'qualified' || ev === 'not_qualified')) {
-            let specKey1 = `${ev}_${tName}_${gradeGrp}`;
-            let specKey2 = `${ev}_${tName}`;
+        if (tName && !isInjured && ['win', 'med', 'over', 'under', 'qualified', 'not_qualified'].includes(category.split('_')[0])) {
+            let baseEv = category.split('_')[0];
+            let specKey1 = `${baseEv}_${tName}_${gradeGrp}`;
+            let specKey2 = `${baseEv}_${tName}`;
             if (coachComments[specKey1]) category = specKey1;
             else if (coachComments[specKey2]) category = specKey2;
         }
@@ -1368,13 +1380,13 @@
         
         if (isSelection) {
             if (curQuals.includes(p)) {
-                upCoach(p.isInjured ? "inj" : "qualified", 5, tName.replace('選考',''));
+                upCoach("qualified", 5, tName.replace('選考',''));
             } else {
                 upCoach("not_qualified", 5, tName.replace('選考',''));
             }
         } else {
             if (isPlayerIn) {
-                upCoach(p.isInjured ? "inj" : cEv, 5, tName);
+                upCoach(cEv, 5, tName);
             } else {
                 upCoach("not_qualified", 5, tName);
             }
@@ -1444,15 +1456,16 @@
             d.a.fatigue = Math.min(10, d.a.fatigue + 1.5 * (1 - careEff));
         });
 
-        if (pData.length > 8) {
+        let maxEntrants = tName.includes('インカレ') ? 16 : 8;
+        if (pData.length > maxEntrants) {
             pData.sort((a,b) => a.res.time - b.res.time);
             let meIdx = pData.findIndex(d => d.a.isPlayer);
-            let final8 = pData.slice(0, 8);
-            if (meIdx >= 8 && curQuals.includes(p)) {
-                final8.pop();
-                final8.push(pData[meIdx]);
+            let finalLst = pData.slice(0, maxEntrants);
+            if (meIdx >= maxEntrants && curQuals.includes(p)) {
+                finalLst.pop();
+                finalLst.push(pData[meIdx]);
             }
-            pData = final8;
+            pData = finalLst;
         }
         
         pData.sort(() => Math.random() - 0.5);
@@ -1477,6 +1490,7 @@
         });
         
         log(`📝 ${tName} は標準記録未達のためスキップしました。`);
+        upCoach('skip', 5, tName);
         setPhase(nextPhase);
     }
 
