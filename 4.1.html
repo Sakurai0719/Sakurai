@@ -5,31 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>400m Track & Field Pro - オンラインランキング</title>
     <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Firebase SDK (Modular) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- ▼▼▼ Firebase Online Ranking Setup ▼▼▼ -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // ※ゲーム本体と同じFirebase設定をここに記述してください
+        // ゲーム本体と同じ設定情報
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyCcm0VxhPW-G4VDiMiXQQtjHAY1Vl25Zwc",
+            authDomain: "ikuseiharunosuke.firebaseapp.com",
+            databaseURL: "https://ikuseiharunosuke-default-rtdb.firebaseio.com",
+            projectId: "ikuseiharunosuke",
+            storageBucket: "ikuseiharunosuke.firebasestorage.app",
+            messagingSenderId: "963254298436",
+            appId: "1:963254298436:web:e15c1f55c3b4b6984ed911",
+            measurementId: "G-L5Y7M057FJ"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch(e) {
+            console.error("Firebase Init Error:", e);
+        }
 
         // ランキング取得・描画メイン処理
-        async function fetchRankings(category) {
+        window.fetchRankings = async function(category) {
             const container = document.getElementById('ranking-list-container');
-            container.innerHTML = `<div class="text-center py-10 text-slate-400">読み込み中...</div>`;
+            container.innerHTML = `<div class="text-center py-10 text-slate-400 font-bold animate-pulse">📡 データを取得中...</div>`;
 
             try {
+                // まず匿名ログインを確実に済ませる（データベースの読み取り許可をもらうため）
+                await signInAnonymously(auth);
+
+                // データの取得
                 const q = query(collection(db, `rankings/v1/${category}`));
                 const snapshot = await getDocs(q);
                 let data = [];
@@ -37,7 +51,7 @@
                     data.push(doc.data());
                 });
 
-                // ソート処理
+                // ソート（並び替え）処理
                 if (category === 'rta' || category === 'pb') {
                     // 少ない順（昇順）
                     data.sort((a, b) => Number(a.val) - Number(b.val));
@@ -47,7 +61,7 @@
                 }
 
                 if (data.length === 0) {
-                    container.innerHTML = `<div class="text-center py-10 text-slate-400">まだランキングデータがありません</div>`;
+                    container.innerHTML = `<div class="text-center py-10 text-slate-400 font-bold">まだランキングデータがありません</div>`;
                     return;
                 }
 
@@ -57,24 +71,26 @@
                     let rankBadge = `bg-slate-700 text-slate-200`;
                     if (rank === 1) rankBadge = `bg-yellow-500 text-white shadow-md shadow-yellow-500/50`;
                     else if (rank === 2) rankBadge = `bg-slate-300 text-slate-800`;
-                    else if (rank === 3) rankBadge = `bg-amber-700 text-white`;
+                    else if (rank === 3) rankBadge = `bg-amber-600 text-white`;
 
+                    // 表示用テキストの調整
                     let displayVal = item.display || item.val;
                     if (category === 'pb') displayVal = Number(item.val).toFixed(2) + "秒";
                     if (category === 'pbCount') displayVal = item.val + "回";
+                    if (category === 'rta' && !item.display) displayVal = item.text || (item.val + "ターン");
 
                     html += `
-                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 mb-2 hover:bg-slate-800 transition">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${rankBadge}">
+                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 mb-2 hover:bg-slate-700 transition duration-200">
+                            <div class="flex items-center space-x-3 truncate pr-2">
+                                <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg font-black text-sm ${rankBadge}">
                                     ${rank}
                                 </div>
-                                <div>
-                                    <div class="font-bold text-slate-100">${escapeHtml(item.name)}</div>
+                                <div class="truncate">
+                                    <div class="font-bold text-slate-100 truncate">${escapeHtml(item.name || '名無し')}</div>
                                     <div class="text-xs text-slate-400">${item.date || ''}</div>
                                 </div>
                             </div>
-                            <div class="text-right font-mono font-bold text-emerald-400 text-sm md:text-base">
+                            <div class="text-right font-mono font-bold text-emerald-400 text-sm md:text-base flex-shrink-0 pl-2">
                                 ${displayVal}
                             </div>
                         </div>
@@ -84,57 +100,65 @@
 
             } catch (e) {
                 console.error(e);
-                container.innerHTML = `<div class="text-center py-10 text-red-400">データの取得に失敗しました</div>`;
+                container.innerHTML = `<div class="text-center py-10 text-red-400 font-bold">データの取得に失敗しました。<br>通信環境を確認してください。</div>`;
             }
         }
 
         function escapeHtml(str) {
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
         // タブ切り替え制御
         window.switchTab = function(category, btnElement) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = "tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white transition";
+                btn.className = "tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition";
             });
             btnElement.className = "tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition";
-            fetchRankings(category);
+            window.fetchRankings(category);
         };
 
-        // 初期表示
+        // 画面読み込み時にPBランキングを自動取得
         window.addEventListener('DOMContentLoaded', () => {
-            fetchRankings('pb');
+            window.fetchRankings('pb');
         });
     </script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans">
 
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[600px]">
+    <div class="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[85vh] max-h-[800px]">
+        
         <!-- ヘッダー -->
-        <div class="p-4 bg-slate-850 border-b border-slate-800 flex justify-between items-center">
-            <h1 class="font-black text-lg text-indigo-400 flex items-center gap-2">
-                🏆 400m Pro オンラインランキング
+        <div class="p-4 bg-slate-800/80 border-b border-slate-700 flex justify-between items-center shadow-sm">
+            <h1 class="font-black text-lg md:text-xl text-indigo-400 flex items-center gap-2">
+                🏆 400m Pro ランキング
             </h1>
-            <a href="index.html" class="text-xs text-slate-400 hover:text-white bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">ゲームに戻る</a>
+            <a href="index.html" class="text-xs md:text-sm font-bold text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition">ゲームに戻る</a>
         </div>
 
         <!-- タブ切り替え -->
-        <div class="flex p-2 bg-slate-900 border-b border-slate-800 justify-around">
-            <button onclick="switchTab('pb', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition">自己ベスト(PB)</button>
-            <button onclick="switchTab('rta', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white transition">世界優勝RTA</button>
-            <button onclick="switchTab('pbCount', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white transition">更新回数</button>
+        <div class="flex p-3 bg-slate-900 border-b border-slate-800 justify-around gap-2">
+            <button onclick="switchTab('pb', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition flex-1">自己ベスト</button>
+            <button onclick="switchTab('rta', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition flex-1">世界優勝RTA</button>
+            <button onclick="switchTab('pbCount', this)" class="tab-btn px-4 py-2 rounded-lg font-bold text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition flex-1">更新回数</button>
         </div>
 
         <!-- リスト表示エリア -->
-        <div id="ranking-list-container" class="flex-1 overflow-y-auto p-4 space-y-1">
+        <div id="ranking-list-container" class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
             <!-- 動的にデータが挿入されます -->
         </div>
 
         <!-- フッター -->
-        <div class="p-3 bg-slate-950 border-t border-slate-900 text-center text-xs text-slate-500">
+        <div class="p-3 bg-slate-950 border-t border-slate-900 text-center text-xs font-bold text-slate-600 tracking-widest">
             400m Track & Field Pro Leaderboard
         </div>
     </div>
 
+    <style>
+        /* スクロールバーのカスタマイズ */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
 </body>
 </html>
